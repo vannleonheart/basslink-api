@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func (s *Service) GetUsers() (*[]basslink.Administrator, error) {
+func (s *Service) getUsers() (*[]basslink.Administrator, error) {
 	var users []basslink.Administrator
 
 	if err := s.App.DB.Connection.Find(&users).Error; err != nil {
@@ -21,7 +21,7 @@ func (s *Service) GetUsers() (*[]basslink.Administrator, error) {
 	return &users, nil
 }
 
-func (s *Service) GetUser(userId string) (*basslink.Administrator, error) {
+func (s *Service) getUser(userId string) (*basslink.Administrator, error) {
 	var user basslink.Administrator
 
 	if err := s.App.DB.Connection.First(&user, userId).Error; err != nil {
@@ -31,7 +31,7 @@ func (s *Service) GetUser(userId string) (*basslink.Administrator, error) {
 	return &user, nil
 }
 
-func (s *Service) UpdateUser(userId string, req *UpdateUserRequest) error {
+func (s *Service) updateUser(userId string, req *UpdateUserRequest) error {
 	var selectedUser basslink.Administrator
 
 	if err := s.App.DB.Connection.First(&selectedUser, userId).Error; err != nil {
@@ -97,7 +97,7 @@ func (s *Service) UpdateUser(userId string, req *UpdateUserRequest) error {
 	return nil
 }
 
-func (s *Service) DeleteUser(userId string) error {
+func (s *Service) deleteUser(userId string) error {
 	var selectedUser basslink.Administrator
 
 	if err := s.App.DB.Connection.First(&selectedUser, userId).Error; err != nil {
@@ -125,7 +125,7 @@ func (s *Service) DeleteUser(userId string) error {
 	return nil
 }
 
-func (s *Service) CreateUser(req *CreateUserRequest) error {
+func (s *Service) createUser(req *CreateUserRequest) error {
 	var existingUsers []basslink.Administrator
 
 	if err := s.App.DB.Connection.Where("username = ?", req.Username).Limit(1).Find(&existingUsers).Error; err != nil {
@@ -187,7 +187,7 @@ func (s *Service) CreateUser(req *CreateUserRequest) error {
 	return nil
 }
 
-func (s *Service) ToggleUserEnable(userId string) error {
+func (s *Service) toggleUserEnable(userId string) error {
 	var selectedUser basslink.Administrator
 
 	if err := s.App.DB.Connection.First(&selectedUser, userId).Error; err != nil {

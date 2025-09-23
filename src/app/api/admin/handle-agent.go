@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func (s *Service) GetAgents() (*[]basslink.Agent, error) {
+func (s *Service) getAgents() (*[]basslink.Agent, error) {
 	var agents []basslink.Agent
 
 	if err := s.App.DB.Connection.Find(&agents).Error; err != nil {
@@ -21,7 +21,7 @@ func (s *Service) GetAgents() (*[]basslink.Agent, error) {
 	return &agents, nil
 }
 
-func (s *Service) GetAgent(agentId string) (*basslink.Agent, error) {
+func (s *Service) getAgent(agentId string) (*basslink.Agent, error) {
 	var agent basslink.Agent
 
 	if err := s.App.DB.Connection.First(&agent, agentId).Error; err != nil {
@@ -31,7 +31,7 @@ func (s *Service) GetAgent(agentId string) (*basslink.Agent, error) {
 	return &agent, nil
 }
 
-func (s *Service) UpdateAgent(agentId string, req *UpdateAgentRequest) error {
+func (s *Service) updateAgent(agentId string, req *UpdateAgentRequest) error {
 	var selectedAgent basslink.Agent
 
 	if err := s.App.DB.Connection.First(&selectedAgent, agentId).Error; err != nil {
@@ -66,7 +66,7 @@ func (s *Service) UpdateAgent(agentId string, req *UpdateAgentRequest) error {
 	return nil
 }
 
-func (s *Service) CreateAgent(req *CreateAgentRequest) error {
+func (s *Service) createAgent(req *CreateAgentRequest) error {
 	var existingAgentUsers []basslink.AgentUser
 
 	if err := s.App.DB.Connection.Where("username = ?", req.Username).Limit(1).Find(&existingAgentUsers).Error; err != nil {
@@ -150,7 +150,7 @@ func (s *Service) CreateAgent(req *CreateAgentRequest) error {
 	return nil
 }
 
-func (s *Service) ToggleAgentEnable(agentId string) error {
+func (s *Service) toggleAgentEnable(agentId string) error {
 	var selectedAgent basslink.Agent
 
 	if err := s.App.DB.Connection.First(&selectedAgent, agentId).Error; err != nil {

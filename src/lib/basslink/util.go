@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
 	"github.com/go-playground/validator/v10"
@@ -15,7 +16,24 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-func ValidateRequest(data interface{}) error {
+func (app *App) CreateJwtToken(claims jwt.Claims) (string, error) {
+	t := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	return t.SignedString([]byte(app.Config.JwtKey))
+}
+
+func (app *App) HashPassword(password string) string {
+	hasher := sha256.New()
+	hasher.Write([]byte(password))
+	hashedPassword := hasher.Sum(nil)
+	return fmt.Sprintf("%x", hashedPassword)
+}
+
+func (app *App) VerifyPassword(password, hashedPassword string) bool {
+	return app.HashPassword(password) == hashedPassword
+}
+
+func (app *App) ValidateRequest(data interface{}) error {
 	eng := en.New()
 	uni := ut.New(eng, eng)
 	trans, _ := uni.GetTranslator("en")
@@ -40,13 +58,7 @@ func ValidateRequest(data interface{}) error {
 	return nil
 }
 
-func CreateJwtToken(claims jwt.Claims, key string) (string, error) {
-	t := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	return t.SignedString([]byte(key))
-}
-
-func VerifySignature(publicKey, message, signature string) bool {
+func (app *App) VerifySignature(publicKey, message, signature string) bool {
 	bytePublicKey := []byte(publicKey)
 	d := make([]byte, base64.StdEncoding.DecodedLen(len(bytePublicKey)))
 	n, err := base64.StdEncoding.Decode(d, bytePublicKey)

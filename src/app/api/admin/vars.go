@@ -9,6 +9,12 @@ type SignInResponse struct {
 	Token string `json:"token"`
 }
 
+type UpdatePasswordRequest struct {
+	Password                string `json:"password" validate:"required"`
+	NewPassword             string `json:"new_password" validate:"required,min=8"`
+	NewPasswordConfirmation string `json:"new_password_confirmation" validate:"required,eqField=NewPassword"`
+}
+
 type CreateUserRequest struct {
 	Role                 string  `json:"role" validate:"required"`
 	Username             string  `json:"username" validate:"required,min=5,max=50"`

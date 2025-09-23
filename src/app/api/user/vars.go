@@ -9,6 +9,12 @@ type SignInResponse struct {
 	Token string `json:"token"`
 }
 
+type UpdatePasswordRequest struct {
+	Password                string `json:"password" validate:"required"`
+	NewPassword             string `json:"new_password" validate:"required,min=8"`
+	NewPasswordConfirmation string `json:"new_password_confirmation" validate:"required,eqField=NewPassword"`
+}
+
 type CreateContactRequest struct {
 	Name          string  `json:"name" validate:"required"`
 	Birthdate     *string `json:"birthdate,omitempty" validate:"omitempty"`
@@ -95,4 +101,24 @@ type UpdateContactAccountRequest struct {
 	PhoneCode   *string `json:"phone_code,omitempty" validate:"omitempty,max=5"`
 	PhoneNo     *string `json:"phone_no,omitempty" validate:"omitempty,max=15"`
 	Notes       *string `json:"notes,omitempty" validate:"omitempty"`
+}
+
+type CreateDisbursementRequest struct {
+	FromContact  string  `json:"from_contact" validate:"required"`
+	FromCurrency string  `json:"from_currency" validate:"required"`
+	FromAmount   float64 `json:"from_amount" validate:"required"`
+	ToContact    string  `json:"to_contact" validate:"required"`
+	ToCurrency   string  `json:"to_currency" validate:"required"`
+	ToAmount     float64 `json:"to_amount" validate:"required"`
+	ToAccount    string  `json:"to_account" validate:"required"`
+	RateCurrency string  `json:"rate_currency" validate:"required"`
+	Rate         float64 `json:"rate" validate:"required"`
+	FeeCurrency  string  `json:"fee_currency" validate:"required"`
+	FeeAmount    float64 `json:"fee_amount" validate:"required"`
+	TransferType string  `json:"transfer_type" validate:"required"`
+	TransferRef  *string `json:"transfer_ref,omitempty" validate:"omitempty"`
+	TransferDate *string `json:"transfer_date,omitempty" validate:"omitempty"`
+	FundSource   *string `json:"fund_source,omitempty" validate:"omitempty"`
+	Purpose      *string `json:"purpose,omitempty" validate:"omitempty"`
+	Notes        *string `json:"notes,omitempty" validate:"omitempty"`
 }

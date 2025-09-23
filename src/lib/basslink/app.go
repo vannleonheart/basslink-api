@@ -4,7 +4,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/golang-jwt/jwt/v5"
 	"github.com/vannleonheart/goutil"
 )
 
@@ -20,9 +19,9 @@ type App struct {
 }
 
 type Config struct {
-	JwtToken string      `json:"jwt_token"`
-	DB       *DBConfig   `json:"db"`
-	Http     *HttpConfig `json:"http"`
+	JwtKey string      `json:"jwt_key"`
+	DB     *DBConfig   `json:"db"`
+	Http   *HttpConfig `json:"http"`
 }
 
 func New(serviceName string, config *Config) *App {
@@ -67,10 +66,4 @@ func (app *App) CreateHttpService() {
 	}
 
 	app.HttpServer = NewHttpServer(*app.Config.Http, app.serviceName)
-}
-
-func (app *App) CreateJwtToken(claims jwt.Claims) (string, error) {
-	t := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	return t.SignedString([]byte(app.Config.JwtToken))
 }

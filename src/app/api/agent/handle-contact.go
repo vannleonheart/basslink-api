@@ -1,4 +1,4 @@
-package user
+package agent
 
 import (
 	"CRM/src/lib/basslink"
@@ -8,30 +8,30 @@ import (
 	"gorm.io/gorm"
 )
 
-func (s *Service) GetContacts(user *basslink.User) (*[]basslink.Contact, error) {
+func (s *Service) getContacts(agent *basslink.Agent) (*[]basslink.Contact, error) {
 	var contacts []basslink.Contact
 
-	if err := s.App.DB.Connection.Where("user_id = ?", user.Id).Find(&contacts).Error; err != nil {
+	if err := s.App.DB.Connection.Where("agent_id = ? AND user_id IS NULL", agent.Id).Find(&contacts).Error; err != nil {
 		return nil, err
 	}
 
 	return &contacts, nil
 }
 
-func (s *Service) GetContact(user *basslink.User, contactId string) (*basslink.Contact, error) {
+func (s *Service) getContact(agent *basslink.Agent, contactId string) (*basslink.Contact, error) {
 	var contact basslink.Contact
 
-	if err := s.App.DB.Connection.Preload("Documents", "Accounts").Where("user_id = ?", user.Id).First(&contact, contactId).Error; err != nil {
+	if err := s.App.DB.Connection.Preload("Documents", "Accounts").Where("agent_id = ? AND user_id IS NULL", agent.Id).First(&contact, contactId).Error; err != nil {
 		return nil, err
 	}
 
 	return &contact, nil
 }
 
-func (s *Service) UpdateContact(user *basslink.User, contactId string, req *UpdateContactRequest) error {
+func (s *Service) updateContact(agent *basslink.Agent, contactId string, req *UpdateContactRequest) error {
 	var selectedContact basslink.Contact
 
-	if err := s.App.DB.Connection.Where("user_id = ?", user.Id).First(&selectedContact, contactId).Error; err != nil {
+	if err := s.App.DB.Connection.Where("agent_id = ? AND user_id IS NULL", agent.Id).First(&selectedContact, contactId).Error; err != nil {
 		return err
 	}
 
@@ -58,7 +58,7 @@ func (s *Service) UpdateContact(user *basslink.User, contactId string, req *Upda
 	}
 
 	if err := s.App.DB.Connection.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(basslink.Contact{}).Where("id = ? AND user_id", selectedContact.Id, user.Id).Updates(updatedContactData).Error; err != nil {
+		if err := tx.Model(basslink.Contact{}).Where("id = ? AND agent_id = ? AND user_id IS NULL", selectedContact.Id, agent.Id).Updates(updatedContactData).Error; err != nil {
 			return err
 		}
 
@@ -70,10 +70,10 @@ func (s *Service) UpdateContact(user *basslink.User, contactId string, req *Upda
 	return nil
 }
 
-func (s *Service) DeleteContact(user *basslink.User, contactId string) error {
+func (s *Service) deleteContact(agent *basslink.Agent, contactId string) error {
 	var selectedContact basslink.Contact
 
-	if err := s.App.DB.Connection.Where("user_id = ?", user.Id).First(&selectedContact, contactId).Error; err != nil {
+	if err := s.App.DB.Connection.Where("agent_id = ? AND user_id IS NULL", agent.Id).First(&selectedContact, contactId).Error; err != nil {
 		return err
 	}
 
@@ -86,7 +86,7 @@ func (s *Service) DeleteContact(user *basslink.User, contactId string) error {
 			return err
 		}
 
-		if err := tx.Model(basslink.Contact{}).Where("id = ? AND user_id = ?", selectedContact.Id, user.Id).Delete(nil).Error; err != nil {
+		if err := tx.Model(basslink.Contact{}).Where("id = ? AND agent_id = ? AND user_id IS NULL", selectedContact.Id, agent.Id).Delete(nil).Error; err != nil {
 			return err
 		}
 
@@ -98,7 +98,7 @@ func (s *Service) DeleteContact(user *basslink.User, contactId string) error {
 	return nil
 }
 
-func (s *Service) CreateContact(user *basslink.User, req *CreateContactRequest) error {
+func (s *Service) createContact(agent *basslink.Agent, req *CreateContactRequest) error {
 	newContactId, err := uuid.NewV7()
 	if err != nil {
 		return err
@@ -108,8 +108,8 @@ func (s *Service) CreateContact(user *basslink.User, req *CreateContactRequest) 
 
 	newUser := basslink.Contact{
 		Id:            newContactId.String(),
-		AgentId:       user.AgentId,
-		UserId:        &user.Id,
+		AgentId:       agent.Id,
+		UserId:        nil,
 		Name:          req.Name,
 		Birthdate:     req.Birthdate,
 		Gender:        req.Gender,
@@ -143,10 +143,10 @@ func (s *Service) CreateContact(user *basslink.User, req *CreateContactRequest) 
 	return nil
 }
 
-func (s *Service) CreateContactDocument(user *basslink.User, contactId string, req *CreateContactDocumentRequest) error {
+func (s *Service) createContactDocument(agent *basslink.Agent, contactId string, req *CreateContactDocumentRequest) error {
 	var selectedContact basslink.Contact
 
-	if err := s.App.DB.Connection.Where("user_id = ?", user.Id).First(&selectedContact, contactId).Error; err != nil {
+	if err := s.App.DB.Connection.Where("agent_id = ? AND user_id IS NULL", agent.Id).First(&selectedContact, contactId).Error; err != nil {
 		return err
 	}
 
@@ -180,10 +180,10 @@ func (s *Service) CreateContactDocument(user *basslink.User, contactId string, r
 	return nil
 }
 
-func (s *Service) UpdateContactDocument(user *basslink.User, contactId, documentId string, req *UpdateContactDocumentRequest) error {
+func (s *Service) updateContactDocument(agent *basslink.Agent, contactId, documentId string, req *UpdateContactDocumentRequest) error {
 	var selectedContact basslink.Contact
 
-	if err := s.App.DB.Connection.Where("user_id = ?", user.Id).First(&selectedContact, contactId).Error; err != nil {
+	if err := s.App.DB.Connection.Where("agent_id = ? AND user_id IS NULL", agent.Id).First(&selectedContact, contactId).Error; err != nil {
 		return err
 	}
 
@@ -215,10 +215,10 @@ func (s *Service) UpdateContactDocument(user *basslink.User, contactId, document
 	return nil
 }
 
-func (s *Service) DeleteContactDocument(user *basslink.User, contactId, documentId string) error {
+func (s *Service) deleteContactDocument(agent *basslink.Agent, contactId, documentId string) error {
 	var selectedContact basslink.Contact
 
-	if err := s.App.DB.Connection.Where("user_id = ?", user.Id).First(&selectedContact, contactId).Error; err != nil {
+	if err := s.App.DB.Connection.Where("agent_id = ? AND user_id IS NULL", agent.Id).First(&selectedContact, contactId).Error; err != nil {
 		return err
 	}
 
@@ -241,10 +241,10 @@ func (s *Service) DeleteContactDocument(user *basslink.User, contactId, document
 	return nil
 }
 
-func (s *Service) CreateContactAccount(user *basslink.User, contactId string, req *CreateContactAccountRequest) error {
+func (s *Service) createContactAccount(agent *basslink.Agent, contactId string, req *CreateContactAccountRequest) error {
 	var selectedContact basslink.Contact
 
-	if err := s.App.DB.Connection.Where("user_id = ?", user.Id).First(&selectedContact, contactId).Error; err != nil {
+	if err := s.App.DB.Connection.Where("agent_id = ? AND user_id IS NULL", agent.Id).First(&selectedContact, contactId).Error; err != nil {
 		return err
 	}
 
@@ -290,10 +290,10 @@ func (s *Service) CreateContactAccount(user *basslink.User, contactId string, re
 	return nil
 }
 
-func (s *Service) UpdateContactAccount(user *basslink.User, contactId, accountId string, req *UpdateContactAccountRequest) error {
+func (s *Service) updateContactAccount(agent *basslink.Agent, contactId, accountId string, req *UpdateContactAccountRequest) error {
 	var selectedContact basslink.Contact
 
-	if err := s.App.DB.Connection.Where("user_id = ?", user.Id).First(&selectedContact, contactId).Error; err != nil {
+	if err := s.App.DB.Connection.Where("agent_id = ? AND user_id IS NULL", agent.Id).First(&selectedContact, contactId).Error; err != nil {
 		return err
 	}
 
@@ -338,10 +338,10 @@ func (s *Service) UpdateContactAccount(user *basslink.User, contactId, accountId
 	return nil
 }
 
-func (s *Service) DeleteContactAccount(user *basslink.User, contactId, accountId string) error {
+func (s *Service) deleteContactAccount(agent *basslink.Agent, contactId, accountId string) error {
 	var selectedContact basslink.Contact
 
-	if err := s.App.DB.Connection.Where("user_id = ?", user.Id).First(&selectedContact, contactId).Error; err != nil {
+	if err := s.App.DB.Connection.Where("agent_id = ? AND user_id IS NULL", agent.Id).First(&selectedContact, contactId).Error; err != nil {
 		return err
 	}
 
