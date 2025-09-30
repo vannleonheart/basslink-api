@@ -44,4 +44,5 @@ func (s *Service) InitRouter() {
 	disbursementEndpoint := mainEndpoint.Group("/disbursements", s.shouldBeUser([]string{}))
 	disbursementEndpoint.Get("/", s.handleGetDisbursements)
 	disbursementEndpoint.Get("/:id", s.handleGetDisbursement)
+	disbursementEndpoint.Post("/", s.handleCreateDisbursement)
 }

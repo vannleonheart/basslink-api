@@ -63,6 +63,92 @@ func (s *Service) handleUpdatePassword(c *fiber.Ctx) error {
 	return basslink.NewSuccessResponse(c, "ACCOUNT_PASSWORD_UPDATE_SUCCESS", nil)
 }
 
+func (s *Service) handleGetAdminUsers(c *fiber.Ctx) error {
+	result, err := s.getAdminUsers()
+	if err != nil {
+		return err
+	}
+
+	return basslink.NewSuccessResponse(c, "USER_LIST_SUCCESS", result)
+}
+
+func (s *Service) handleGetAdminUser(c *fiber.Ctx) error {
+	userId := c.Params("id")
+	result, err := s.getAdminUser(userId)
+	if err != nil {
+		return err
+	}
+
+	return basslink.NewSuccessResponse(c, "USER_GET_SUCCESS", result)
+}
+
+func (s *Service) handleCreateAdminUser(c *fiber.Ctx) error {
+	var req CreateUserRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		return err
+	}
+
+	if err := s.App.ValidateRequest(&req); err != nil {
+		var errorData []map[string]interface{}
+
+		_ = json.Unmarshal([]byte(err.Error()), &errorData)
+
+		return basslink.NewAppError("ERROR_VALIDATION", basslink.ErrBadRequest, basslink.ErrBadRequestValidation, "", errorData)
+	}
+
+	err := s.createAdminUser(&req)
+	if err != nil {
+		return err
+	}
+
+	return basslink.NewSuccessResponse(c, "USER_CREATE_SUCCESS", nil)
+}
+
+func (s *Service) handleUpdateAdminUser(c *fiber.Ctx) error {
+	var req UpdateUserRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		return err
+	}
+
+	if err := s.App.ValidateRequest(&req); err != nil {
+		var errorData []map[string]interface{}
+
+		_ = json.Unmarshal([]byte(err.Error()), &errorData)
+
+		return basslink.NewAppError("ERROR_VALIDATION", basslink.ErrBadRequest, basslink.ErrBadRequestValidation, "", errorData)
+	}
+
+	userId := c.Params("id")
+	err := s.updateAdminUser(userId, &req)
+	if err != nil {
+		return err
+	}
+
+	return basslink.NewSuccessResponse(c, "USER_UPDATE_SUCCESS", nil)
+}
+
+func (s *Service) handleDeleteAdminUser(c *fiber.Ctx) error {
+	userId := c.Params("id")
+	err := s.deleteAdminUser(userId)
+	if err != nil {
+		return err
+	}
+
+	return basslink.NewSuccessResponse(c, "USER_DELETE_SUCCESS", nil)
+}
+
+func (s *Service) handleToggleAdminUserEnable(c *fiber.Ctx) error {
+	userId := c.Params("id")
+	err := s.toggleAdminUserEnable(userId)
+	if err != nil {
+		return err
+	}
+
+	return basslink.NewSuccessResponse(c, "USER_UPDATE_SUCCESS", nil)
+}
+
 func (s *Service) handleGetUsers(c *fiber.Ctx) error {
 	result, err := s.getUsers()
 	if err != nil {
@@ -80,73 +166,6 @@ func (s *Service) handleGetUser(c *fiber.Ctx) error {
 	}
 
 	return basslink.NewSuccessResponse(c, "USER_GET_SUCCESS", result)
-}
-
-func (s *Service) handleCreateUser(c *fiber.Ctx) error {
-	var req CreateUserRequest
-
-	if err := c.BodyParser(&req); err != nil {
-		return err
-	}
-
-	if err := s.App.ValidateRequest(&req); err != nil {
-		var errorData []map[string]interface{}
-
-		_ = json.Unmarshal([]byte(err.Error()), &errorData)
-
-		return basslink.NewAppError("ERROR_VALIDATION", basslink.ErrBadRequest, basslink.ErrBadRequestValidation, "", errorData)
-	}
-
-	err := s.createUser(&req)
-	if err != nil {
-		return err
-	}
-
-	return basslink.NewSuccessResponse(c, "USER_CREATE_SUCCESS", nil)
-}
-
-func (s *Service) handleUpdateUser(c *fiber.Ctx) error {
-	var req UpdateUserRequest
-
-	if err := c.BodyParser(&req); err != nil {
-		return err
-	}
-
-	if err := s.App.ValidateRequest(&req); err != nil {
-		var errorData []map[string]interface{}
-
-		_ = json.Unmarshal([]byte(err.Error()), &errorData)
-
-		return basslink.NewAppError("ERROR_VALIDATION", basslink.ErrBadRequest, basslink.ErrBadRequestValidation, "", errorData)
-	}
-
-	userId := c.Params("id")
-	err := s.updateUser(userId, &req)
-	if err != nil {
-		return err
-	}
-
-	return basslink.NewSuccessResponse(c, "USER_UPDATE_SUCCESS", nil)
-}
-
-func (s *Service) handleDeleteUser(c *fiber.Ctx) error {
-	userId := c.Params("id")
-	err := s.deleteUser(userId)
-	if err != nil {
-		return err
-	}
-
-	return basslink.NewSuccessResponse(c, "USER_DELETE_SUCCESS", nil)
-}
-
-func (s *Service) handleToggleUserEnable(c *fiber.Ctx) error {
-	userId := c.Params("id")
-	err := s.toggleUserEnable(userId)
-	if err != nil {
-		return err
-	}
-
-	return basslink.NewSuccessResponse(c, "USER_UPDATE_SUCCESS", nil)
 }
 
 func (s *Service) handleGetAgents(c *fiber.Ctx) error {
@@ -223,6 +242,35 @@ func (s *Service) handleToggleAgentEnable(c *fiber.Ctx) error {
 	}
 
 	return basslink.NewSuccessResponse(c, "AGENT_UPDATE_SUCCESS", nil)
+}
+
+func (s *Service) handleGetContacts(c *fiber.Ctx) error {
+	result, err := s.getContacts()
+	if err != nil {
+		return err
+	}
+
+	return basslink.NewSuccessResponse(c, "CONTACT_LIST_SUCCESS", result)
+}
+
+func (s *Service) handleGetContact(c *fiber.Ctx) error {
+	contactId := c.Params("id")
+	result, err := s.getContact(contactId)
+	if err != nil {
+		return err
+	}
+
+	return basslink.NewSuccessResponse(c, "CONTACT_GET_SUCCESS", result)
+}
+
+func (s *Service) handleGetContactAccounts(c *fiber.Ctx) error {
+	contactId := c.Params("contactId")
+	result, err := s.getContactAccounts(contactId)
+	if err != nil {
+		return err
+	}
+
+	return basslink.NewSuccessResponse(c, "USER_LIST_SUCCESS", result)
 }
 
 func (s *Service) handleGetDisbursements(c *fiber.Ctx) error {

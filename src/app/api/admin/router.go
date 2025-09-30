@@ -10,13 +10,13 @@ func (s *Service) InitRouter() {
 	accountEndpoint.Get("/profile", s.handleGetProfile)
 	accountEndpoint.Patch("/password", s.handleUpdatePassword)
 
-	userEndpoint := mainEndpoint.Group("/users", s.shouldBeUser([]string{}))
-	userEndpoint.Get("/", s.handleGetUsers)
-	userEndpoint.Get("/:id", s.handleGetUser)
-	userEndpoint.Post("/", s.handleCreateUser)
-	userEndpoint.Put("/:id", s.handleUpdateUser)
-	userEndpoint.Patch("/:id/status", s.handleToggleUserEnable)
-	userEndpoint.Delete("/:id", s.handleDeleteUser)
+	adminUserEndpoint := mainEndpoint.Group("/admin_users", s.shouldBeUser([]string{}))
+	adminUserEndpoint.Get("/", s.handleGetAdminUsers)
+	adminUserEndpoint.Get("/:id", s.handleGetAdminUser)
+	adminUserEndpoint.Post("/", s.handleCreateAdminUser)
+	adminUserEndpoint.Put("/:id", s.handleUpdateAdminUser)
+	adminUserEndpoint.Patch("/:id/status", s.handleToggleAdminUserEnable)
+	adminUserEndpoint.Delete("/:id", s.handleDeleteAdminUser)
 
 	agentEndpoint := mainEndpoint.Group("/agents", s.shouldBeUser([]string{}))
 	agentEndpoint.Get("/", s.handleGetAgents)
@@ -24,6 +24,16 @@ func (s *Service) InitRouter() {
 	agentEndpoint.Post("/", s.handleCreateAgent)
 	agentEndpoint.Put("/:id", s.handleUpdateAgent)
 	agentEndpoint.Patch("/:id/status", s.handleToggleAgentEnable)
+
+	userEndpoint := mainEndpoint.Group("/users", s.shouldBeUser([]string{}))
+	userEndpoint.Get("/", s.handleGetUsers)
+	userEndpoint.Get("/:id", s.handleGetUser)
+
+	contactEndpoint := mainEndpoint.Group("/contacts", s.shouldBeUser([]string{}))
+	contactEndpoint.Get("/", s.handleGetContacts)
+	contactEndpoint.Get("/:id", s.handleGetContact)
+
+	contactEndpoint.Get("/:contactId/accounts", s.handleGetContactAccounts)
 
 	disbursementEndpoint := mainEndpoint.Group("/disbursements", s.shouldBeUser([]string{}))
 	disbursementEndpoint.Get("/", s.handleGetDisbursements)

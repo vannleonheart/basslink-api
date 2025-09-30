@@ -234,29 +234,33 @@ type ContactAccount struct {
 func (t ContactAccount) TableName() string { return TableContactAccounts }
 
 type Disbursement struct {
-	Id           string  `json:"id"`
-	AgentId      string  `json:"agent_id"`
-	UserId       *string `json:"user_id,omitempty"`
-	FromCurrency string  `json:"from_currency"`
-	FromAmount   float64 `json:"from_amount"`
-	ToContact    string  `json:"to_contact"`
-	ToCurrency   string  `json:"to_currency"`
-	ToAmount     float64 `json:"to_amount"`
-	ToAccount    string  `json:"to_account"`
-	RateCurrency string  `json:"rate_currency"`
-	Rate         float64 `json:"rate"`
-	FeeCurrency  string  `json:"fee_currency"`
-	FeeAmount    float64 `json:"fee_amount"`
-	TransferType string  `json:"transfer_type"`
-	TransferRef  *string `json:"transfer_ref,omitempty"`
-	TransferDate *string `json:"transfer_date,omitempty"`
-	FundSource   *string `json:"fund_source,omitempty"`
-	Purpose      *string `json:"purpose,omitempty"`
-	Notes        *string `json:"notes,omitempty"`
-	Status       string  `json:"status"`
-	IsSettled    bool    `json:"is_settled"`
-	Created      int64   `json:"created"`
-	Updated      *int64  `json:"updated,omitempty"`
+	Id             string          `json:"id"`
+	AgentId        string          `json:"agent_id"`
+	UserId         *string         `json:"user_id,omitempty"`
+	FromCurrency   string          `json:"from_currency"`
+	FromAmount     float64         `json:"from_amount"`
+	ToContact      string          `json:"to_contact"`
+	ToCurrency     string          `json:"to_currency"`
+	ToAmount       float64         `json:"to_amount"`
+	ToAccount      string          `json:"to_account"`
+	RateCurrency   string          `json:"rate_currency"`
+	Rate           float64         `json:"rate"`
+	FeeCurrency    string          `json:"fee_currency"`
+	FeeAmount      float64         `json:"fee_amount"`
+	TransferType   string          `json:"transfer_type"`
+	TransferRef    *string         `json:"transfer_ref,omitempty"`
+	TransferDate   *string         `json:"transfer_date,omitempty"`
+	FundSource     *string         `json:"fund_source,omitempty"`
+	Purpose        *string         `json:"purpose,omitempty"`
+	Notes          *string         `json:"notes,omitempty"`
+	Status         string          `json:"status"`
+	IsSettled      bool            `json:"is_settled"`
+	Created        int64           `json:"created"`
+	Updated        *int64          `json:"updated,omitempty"`
+	TargetAccount  *ContactAccount `json:"target_account,omitempty" gorm:"foreignKey:ToAccount;reference:Id"`
+	TargetCurrency *Currency       `json:"target_currency,omitempty" gorm:"foreignKey:ToCurrency;reference:Id"`
+	User           *User           `json:"user,omitempty" gorm:"foreignKey:UserId;reference:Id"`
+	Contact        *Contact        `json:"contact,omitempty" gorm:"foreignKey:ToContact;reference:Id"`
 }
 
 func (t Disbursement) TableName() string { return TableDisbursements }

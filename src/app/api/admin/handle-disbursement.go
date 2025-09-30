@@ -5,7 +5,7 @@ import "CRM/src/lib/basslink"
 func (s *Service) getDisbursements() (*[]basslink.Disbursement, error) {
 	var disbursements []basslink.Disbursement
 
-	if err := s.App.DB.Connection.Find(&disbursements).Error; err != nil {
+	if err := s.App.DB.Connection.Preload("User").Preload("Contact").Preload("TargetAccount").Preload("TargetCurrency").Find(&disbursements).Error; err != nil {
 		return nil, err
 	}
 
