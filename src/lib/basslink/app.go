@@ -14,14 +14,16 @@ type App struct {
 	Tz         *time.Location
 	DB         *DBClient
 	HttpServer *HttpServer
+	Storage    *StorageClient
 
 	SignalChannel chan os.Signal
 }
 
 type Config struct {
-	JwtKey string      `json:"jwt_key"`
-	DB     *DBConfig   `json:"db"`
-	Http   *HttpConfig `json:"http"`
+	JwtKey  string         `json:"jwt_key"`
+	DB      *DBConfig      `json:"db"`
+	Http    *HttpConfig    `json:"http"`
+	Storage *StorageConfig `json:"storage"`
 }
 
 func New(serviceName string, config *Config) *App {
@@ -66,4 +68,17 @@ func (app *App) CreateHttpService() {
 	}
 
 	app.HttpServer = NewHttpServer(*app.Config.Http, app.serviceName)
+}
+
+func (app *App) CreateStorageClient() {
+	if app.Config.Storage == nil {
+		panic("storage config is not set")
+	}
+
+	cl, err := NewStorageClient(app.Config.Storage)
+	if err != nil {
+		panic(err)
+	}
+
+	app.Storage = cl
 }

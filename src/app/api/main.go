@@ -37,6 +37,7 @@ func main() {
 	)
 
 	app.ConnectToDatabase()
+	app.CreateStorageClient()
 	app.CreateHttpService()
 
 	initRouter()

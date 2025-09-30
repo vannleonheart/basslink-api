@@ -2,6 +2,7 @@ package agent
 
 import (
 	"CRM/src/lib/basslink"
+	"encoding/json"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -14,7 +15,11 @@ func (s *Service) handleSignIn(c *fiber.Ctx) error {
 	}
 
 	if err := s.App.ValidateRequest(&req); err != nil {
-		return err
+		var errorData []map[string]interface{}
+
+		_ = json.Unmarshal([]byte(err.Error()), &errorData)
+
+		return basslink.NewAppError("ERROR_VALIDATION", basslink.ErrBadRequest, basslink.ErrBadRequestValidation, "", errorData)
 	}
 
 	result, err := s.signIn(&req)
@@ -22,7 +27,16 @@ func (s *Service) handleSignIn(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.JSON(result)
+	return basslink.NewSuccessResponse(c, "AUTH_SIGNIN_SUCCESS", result)
+}
+
+func (s *Service) handleGetProfile(c *fiber.Ctx) error {
+	agentUser := c.Locals("agent").(*basslink.AgentUser)
+	result, err := s.getProfile(agentUser)
+	if err != nil {
+		return err
+	}
+	return basslink.NewSuccessResponse(c, "ACCOUNT_PROFILE_GET_SUCCESS", result)
 }
 
 func (s *Service) handleUpdatePassword(c *fiber.Ctx) error {
@@ -33,7 +47,11 @@ func (s *Service) handleUpdatePassword(c *fiber.Ctx) error {
 	}
 
 	if err := s.App.ValidateRequest(&req); err != nil {
-		return err
+		var errorData []map[string]interface{}
+
+		_ = json.Unmarshal([]byte(err.Error()), &errorData)
+
+		return basslink.NewAppError("ERROR_VALIDATION", basslink.ErrBadRequest, basslink.ErrBadRequestValidation, "", errorData)
 	}
 
 	agentUser := c.Locals("agent").(*basslink.AgentUser)
@@ -42,7 +60,7 @@ func (s *Service) handleUpdatePassword(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.SendStatus(fiber.StatusOK)
+	return basslink.NewSuccessResponse(c, "ACCOUNT_PASSWORD_UPDATE_SUCCESS", nil)
 }
 
 func (s *Service) handleGetAgentUsers(c *fiber.Ctx) error {
@@ -52,7 +70,7 @@ func (s *Service) handleGetAgentUsers(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.JSON(result)
+	return basslink.NewSuccessResponse(c, "USER_LIST_SUCCESS", result)
 }
 
 func (s *Service) handleGetAgentUser(c *fiber.Ctx) error {
@@ -63,7 +81,7 @@ func (s *Service) handleGetAgentUser(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.JSON(result)
+	return basslink.NewSuccessResponse(c, "USER_GET_SUCCESS", result)
 }
 
 func (s *Service) handleCreateAgentUser(c *fiber.Ctx) error {
@@ -74,7 +92,11 @@ func (s *Service) handleCreateAgentUser(c *fiber.Ctx) error {
 	}
 
 	if err := s.App.ValidateRequest(&req); err != nil {
-		return err
+		var errorData []map[string]interface{}
+
+		_ = json.Unmarshal([]byte(err.Error()), &errorData)
+
+		return basslink.NewAppError("ERROR_VALIDATION", basslink.ErrBadRequest, basslink.ErrBadRequestValidation, "", errorData)
 	}
 
 	agentUser := c.Locals("agent").(*basslink.AgentUser)
@@ -83,7 +105,7 @@ func (s *Service) handleCreateAgentUser(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.SendStatus(fiber.StatusCreated)
+	return basslink.NewSuccessResponse(c, "USER_CREATE_SUCCESS", nil)
 }
 
 func (s *Service) handleUpdateAgentUser(c *fiber.Ctx) error {
@@ -94,7 +116,11 @@ func (s *Service) handleUpdateAgentUser(c *fiber.Ctx) error {
 	}
 
 	if err := s.App.ValidateRequest(&req); err != nil {
-		return err
+		var errorData []map[string]interface{}
+
+		_ = json.Unmarshal([]byte(err.Error()), &errorData)
+
+		return basslink.NewAppError("ERROR_VALIDATION", basslink.ErrBadRequest, basslink.ErrBadRequestValidation, "", errorData)
 	}
 
 	agentUser := c.Locals("agent").(*basslink.AgentUser)
@@ -104,7 +130,7 @@ func (s *Service) handleUpdateAgentUser(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.SendStatus(fiber.StatusOK)
+	return basslink.NewSuccessResponse(c, "USER_UPDATE_SUCCESS", nil)
 }
 
 func (s *Service) handleDeleteAgentUser(c *fiber.Ctx) error {
@@ -115,7 +141,7 @@ func (s *Service) handleDeleteAgentUser(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.SendStatus(fiber.StatusOK)
+	return basslink.NewSuccessResponse(c, "USER_DELETE_SUCCESS", nil)
 }
 
 func (s *Service) handleToggleAgentUserEnable(c *fiber.Ctx) error {
@@ -126,28 +152,26 @@ func (s *Service) handleToggleAgentUserEnable(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.SendStatus(fiber.StatusOK)
+	return basslink.NewSuccessResponse(c, "USER_UPDATE_SUCCESS", nil)
 }
 
 func (s *Service) handleGetUsers(c *fiber.Ctx) error {
-	agentUser := c.Locals("agent").(*basslink.AgentUser)
-	result, err := s.getUsers(agentUser.Agent)
+	result, err := s.getUsers()
 	if err != nil {
 		return err
 	}
 
-	return c.JSON(result)
+	return basslink.NewSuccessResponse(c, "USER_LIST_SUCCESS", result)
 }
 
 func (s *Service) handleGetUser(c *fiber.Ctx) error {
-	agentUser := c.Locals("agent").(*basslink.AgentUser)
 	userId := c.Params("id")
-	result, err := s.getAgentUser(agentUser.Agent, userId)
+	result, err := s.getUser(userId)
 	if err != nil {
 		return err
 	}
 
-	return c.JSON(result)
+	return basslink.NewSuccessResponse(c, "USER_GET_SUCCESS", result)
 }
 
 func (s *Service) handleCreateUser(c *fiber.Ctx) error {
@@ -158,7 +182,11 @@ func (s *Service) handleCreateUser(c *fiber.Ctx) error {
 	}
 
 	if err := s.App.ValidateRequest(&req); err != nil {
-		return err
+		var errorData []map[string]interface{}
+
+		_ = json.Unmarshal([]byte(err.Error()), &errorData)
+
+		return basslink.NewAppError("ERROR_VALIDATION", basslink.ErrBadRequest, basslink.ErrBadRequestValidation, "", errorData)
 	}
 
 	agentUser := c.Locals("agent").(*basslink.AgentUser)
@@ -167,7 +195,7 @@ func (s *Service) handleCreateUser(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.SendStatus(fiber.StatusCreated)
+	return basslink.NewSuccessResponse(c, "USER_CREATE_SUCCESS", nil)
 }
 
 func (s *Service) handleUpdateUser(c *fiber.Ctx) error {
@@ -178,49 +206,49 @@ func (s *Service) handleUpdateUser(c *fiber.Ctx) error {
 	}
 
 	if err := s.App.ValidateRequest(&req); err != nil {
-		return err
+		var errorData []map[string]interface{}
+
+		_ = json.Unmarshal([]byte(err.Error()), &errorData)
+
+		return basslink.NewAppError("ERROR_VALIDATION", basslink.ErrBadRequest, basslink.ErrBadRequestValidation, "", errorData)
 	}
 
-	agentUser := c.Locals("agent").(*basslink.AgentUser)
 	userId := c.Params("id")
-	err := s.updateUser(agentUser.Agent, userId, &req)
+	err := s.updateUser(userId, &req)
 	if err != nil {
 		return err
 	}
 
-	return c.SendStatus(fiber.StatusOK)
+	return basslink.NewSuccessResponse(c, "USER_UPDATE_SUCCESS", nil)
 }
 
 func (s *Service) handleToggleUserEnable(c *fiber.Ctx) error {
-	agentUser := c.Locals("agent").(*basslink.AgentUser)
 	userId := c.Params("id")
-	err := s.toggleUserEnable(agentUser.Agent, userId)
+	err := s.toggleUserEnable(userId)
 	if err != nil {
 		return err
 	}
 
-	return c.SendStatus(fiber.StatusOK)
+	return basslink.NewSuccessResponse(c, "USER_UPDATE_SUCCESS", nil)
 }
 
 func (s *Service) handleGetContacts(c *fiber.Ctx) error {
-	agentUser := c.Locals("agent").(*basslink.AgentUser)
-	result, err := s.getContacts(agentUser.Agent)
+	result, err := s.getContacts()
 	if err != nil {
 		return err
 	}
 
-	return c.JSON(result)
+	return basslink.NewSuccessResponse(c, "CONTACT_LIST_SUCCESS", result)
 }
 
 func (s *Service) handleGetContact(c *fiber.Ctx) error {
-	agentUser := c.Locals("agent").(*basslink.AgentUser)
 	contactId := c.Params("id")
-	result, err := s.getContact(agentUser.Agent, contactId)
+	result, err := s.getContact(contactId)
 	if err != nil {
 		return err
 	}
 
-	return c.JSON(result)
+	return basslink.NewSuccessResponse(c, "CONTACT_GET_SUCCESS", result)
 }
 
 func (s *Service) handleCreateContact(c *fiber.Ctx) error {
@@ -231,7 +259,11 @@ func (s *Service) handleCreateContact(c *fiber.Ctx) error {
 	}
 
 	if err := s.App.ValidateRequest(&req); err != nil {
-		return err
+		var errorData []map[string]interface{}
+
+		_ = json.Unmarshal([]byte(err.Error()), &errorData)
+
+		return basslink.NewAppError("ERROR_VALIDATION", basslink.ErrBadRequest, basslink.ErrBadRequestValidation, "", errorData)
 	}
 
 	agentUser := c.Locals("agent").(*basslink.AgentUser)
@@ -240,7 +272,7 @@ func (s *Service) handleCreateContact(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.SendStatus(fiber.StatusCreated)
+	return basslink.NewSuccessResponse(c, "CONTACT_CREATE_SUCCESS", nil)
 }
 
 func (s *Service) handleUpdateContact(c *fiber.Ctx) error {
@@ -251,28 +283,30 @@ func (s *Service) handleUpdateContact(c *fiber.Ctx) error {
 	}
 
 	if err := s.App.ValidateRequest(&req); err != nil {
-		return err
+		var errorData []map[string]interface{}
+
+		_ = json.Unmarshal([]byte(err.Error()), &errorData)
+
+		return basslink.NewAppError("ERROR_VALIDATION", basslink.ErrBadRequest, basslink.ErrBadRequestValidation, "", errorData)
 	}
 
-	agentUser := c.Locals("agent").(*basslink.AgentUser)
 	contactId := c.Params("id")
-	err := s.updateContact(agentUser.Agent, contactId, &req)
+	err := s.updateContact(contactId, &req)
 	if err != nil {
 		return err
 	}
 
-	return c.SendStatus(fiber.StatusOK)
+	return basslink.NewSuccessResponse(c, "CONTACT_UPDATE_SUCCESS", nil)
 }
 
 func (s *Service) handleDeleteContact(c *fiber.Ctx) error {
-	agentUser := c.Locals("agent").(*basslink.AgentUser)
 	contactId := c.Params("id")
-	err := s.deleteContact(agentUser.Agent, contactId)
+	err := s.deleteContact(contactId)
 	if err != nil {
 		return err
 	}
 
-	return c.SendStatus(fiber.StatusOK)
+	return basslink.NewSuccessResponse(c, "CONTACT_DELETE_SUCCESS", nil)
 }
 
 func (s *Service) handleCreateContactDocument(c *fiber.Ctx) error {
@@ -283,17 +317,20 @@ func (s *Service) handleCreateContactDocument(c *fiber.Ctx) error {
 	}
 
 	if err := s.App.ValidateRequest(&req); err != nil {
-		return err
+		var errorData []map[string]interface{}
+
+		_ = json.Unmarshal([]byte(err.Error()), &errorData)
+
+		return basslink.NewAppError("ERROR_VALIDATION", basslink.ErrBadRequest, basslink.ErrBadRequestValidation, "", errorData)
 	}
 
 	contactId := c.Params("contactId")
-	agentUser := c.Locals("agent").(*basslink.AgentUser)
-	err := s.createContactDocument(agentUser.Agent, contactId, &req)
+	err := s.createContactDocument(contactId, &req)
 	if err != nil {
 		return err
 	}
 
-	return c.SendStatus(fiber.StatusCreated)
+	return basslink.NewSuccessResponse(c, "CONTACT_DOCUMENT_CREATE_SUCCESS", nil)
 }
 
 func (s *Service) handleUpdateContactDocument(c *fiber.Ctx) error {
@@ -304,30 +341,42 @@ func (s *Service) handleUpdateContactDocument(c *fiber.Ctx) error {
 	}
 
 	if err := s.App.ValidateRequest(&req); err != nil {
-		return err
+		var errorData []map[string]interface{}
+
+		_ = json.Unmarshal([]byte(err.Error()), &errorData)
+
+		return basslink.NewAppError("ERROR_VALIDATION", basslink.ErrBadRequest, basslink.ErrBadRequestValidation, "", errorData)
 	}
 
-	agentUser := c.Locals("agent").(*basslink.AgentUser)
 	contactId := c.Params("contactId")
 	documentId := c.Params("documentId")
-	err := s.updateContactDocument(agentUser.Agent, contactId, documentId, &req)
+	err := s.updateContactDocument(contactId, documentId, &req)
 	if err != nil {
 		return err
 	}
 
-	return c.SendStatus(fiber.StatusOK)
+	return basslink.NewSuccessResponse(c, "CONTACT_DOCUMENT_UPDATE_SUCCESS", nil)
 }
 
 func (s *Service) handleDeleteContactDocument(c *fiber.Ctx) error {
-	agentUser := c.Locals("agent").(*basslink.AgentUser)
 	contactId := c.Params("contactId")
 	documentId := c.Params("documentId")
-	err := s.deleteContactDocument(agentUser.Agent, contactId, documentId)
+	err := s.deleteContactDocument(contactId, documentId)
 	if err != nil {
 		return err
 	}
 
-	return c.SendStatus(fiber.StatusOK)
+	return basslink.NewSuccessResponse(c, "CONTACT_DOCUMENT_DELETE_SUCCESS", nil)
+}
+
+func (s *Service) handleGetContactAccounts(c *fiber.Ctx) error {
+	contactId := c.Params("contactId")
+	result, err := s.getContactAccounts(contactId)
+	if err != nil {
+		return err
+	}
+
+	return basslink.NewSuccessResponse(c, "USER_LIST_SUCCESS", result)
 }
 
 func (s *Service) handleCreateContactAccount(c *fiber.Ctx) error {
@@ -338,17 +387,20 @@ func (s *Service) handleCreateContactAccount(c *fiber.Ctx) error {
 	}
 
 	if err := s.App.ValidateRequest(&req); err != nil {
-		return err
+		var errorData []map[string]interface{}
+
+		_ = json.Unmarshal([]byte(err.Error()), &errorData)
+
+		return basslink.NewAppError("ERROR_VALIDATION", basslink.ErrBadRequest, basslink.ErrBadRequestValidation, "", errorData)
 	}
 
 	contactId := c.Params("contactId")
-	agentUser := c.Locals("agent").(*basslink.AgentUser)
-	err := s.createContactAccount(agentUser.Agent, contactId, &req)
+	err := s.createContactAccount(contactId, &req)
 	if err != nil {
 		return err
 	}
 
-	return c.SendStatus(fiber.StatusCreated)
+	return basslink.NewSuccessResponse(c, "CONTACT_ACCOUNT_CREATE_SUCCESS", nil)
 }
 
 func (s *Service) handleUpdateContactAccount(c *fiber.Ctx) error {
@@ -359,30 +411,32 @@ func (s *Service) handleUpdateContactAccount(c *fiber.Ctx) error {
 	}
 
 	if err := s.App.ValidateRequest(&req); err != nil {
-		return err
+		var errorData []map[string]interface{}
+
+		_ = json.Unmarshal([]byte(err.Error()), &errorData)
+
+		return basslink.NewAppError("ERROR_VALIDATION", basslink.ErrBadRequest, basslink.ErrBadRequestValidation, "", errorData)
 	}
 
-	agentUser := c.Locals("agent").(*basslink.AgentUser)
 	contactId := c.Params("contactId")
 	accountId := c.Params("accountId")
-	err := s.updateContactAccount(agentUser.Agent, contactId, accountId, &req)
+	err := s.updateContactAccount(contactId, accountId, &req)
 	if err != nil {
 		return err
 	}
 
-	return c.SendStatus(fiber.StatusOK)
+	return basslink.NewSuccessResponse(c, "CONTACT_ACCOUNT_UPDATE_SUCCESS", nil)
 }
 
 func (s *Service) handleDeleteContactAccount(c *fiber.Ctx) error {
-	agentUser := c.Locals("agent").(*basslink.AgentUser)
 	contactId := c.Params("contactId")
 	accountId := c.Params("accountId")
-	err := s.deleteContactAccount(agentUser.Agent, contactId, accountId)
+	err := s.deleteContactAccount(contactId, accountId)
 	if err != nil {
 		return err
 	}
 
-	return c.SendStatus(fiber.StatusOK)
+	return basslink.NewSuccessResponse(c, "CONTACT_ACCOUNT_DELETE_SUCCESS", nil)
 }
 
 func (s *Service) handleGetDisbursements(c *fiber.Ctx) error {
@@ -392,7 +446,7 @@ func (s *Service) handleGetDisbursements(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.JSON(result)
+	return basslink.NewSuccessResponse(c, "DISBURSEMENT_LIST_SUCCESS", result)
 }
 
 func (s *Service) handleGetDisbursement(c *fiber.Ctx) error {
@@ -403,5 +457,28 @@ func (s *Service) handleGetDisbursement(c *fiber.Ctx) error {
 		return err
 	}
 
-	return c.JSON(result)
+	return basslink.NewSuccessResponse(c, "DISBURSEMENT_GET_SUCCESS", result)
+}
+
+func (s *Service) handleCreateDisbursement(c *fiber.Ctx) error {
+	var req CreateDisbursementRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		return err
+	}
+
+	if err := s.App.ValidateRequest(&req); err != nil {
+		var errorData []map[string]interface{}
+
+		_ = json.Unmarshal([]byte(err.Error()), &errorData)
+
+		return basslink.NewAppError("ERROR_VALIDATION", basslink.ErrBadRequest, basslink.ErrBadRequestValidation, "", errorData)
+	}
+	agentUser := c.Locals("agent").(*basslink.AgentUser)
+	err := s.createDisbursement(agentUser.Agent, &req)
+	if err != nil {
+		return err
+	}
+
+	return basslink.NewSuccessResponse(c, "DISBURSEMENT_CREATE_SUCCESS", nil)
 }

@@ -12,7 +12,7 @@ type SignInResponse struct {
 type UpdatePasswordRequest struct {
 	Password                string `json:"password" validate:"required"`
 	NewPassword             string `json:"new_password" validate:"required,min=8"`
-	NewPasswordConfirmation string `json:"new_password_confirmation" validate:"required,eqField=NewPassword"`
+	NewPasswordConfirmation string `json:"new_password_confirmation" validate:"required,eqfield=NewPassword"`
 }
 
 type CreateContactRequest struct {

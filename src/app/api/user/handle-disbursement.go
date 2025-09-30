@@ -21,19 +21,3 @@ func (s *Service) getDisbursement(user *basslink.User, disbursementId string) (*
 
 	return &disbursement, nil
 }
-
-func (s *Service) createDisbursement(user *basslink.User, req *CreateDisbursementRequest) {
-
-}
-
-func (s *Service) updateDisbursement(user *basslink.User) {
-
-}
-
-func (s *Service) submitDisbursement(user *basslink.User) {
-
-}
-
-func (s *Service) cancelDisbursement(user *basslink.User) {
-
-}

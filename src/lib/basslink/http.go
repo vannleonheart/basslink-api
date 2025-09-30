@@ -78,7 +78,7 @@ func NewHttpServer(cfg HttpConfig, serviceId string) *HttpServer {
 				}
 			}
 
-			return NewErrorResponse(ctx, NewError(serviceId, kind, code, message, "", nil))
+			return NewErrorResponse(ctx, NewAppError(message, code, kind, "", nil))
 		},
 	})
 

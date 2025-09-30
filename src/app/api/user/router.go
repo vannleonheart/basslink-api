@@ -6,20 +6,9 @@ func (s *Service) InitRouter() {
 	authEndpoint := mainEndpoint.Group("/auth", s.shouldBeGuest)
 	authEndpoint.Post("/signin", s.handleSignIn)
 
-	contactEndpoint := mainEndpoint.Group("/contacts", s.shouldBeUser)
-	contactEndpoint.Get("/", s.handleGetContacts)
-	contactEndpoint.Get("/:id", s.handleGetContact)
-	contactEndpoint.Post("/", s.handleCreateContact)
-	contactEndpoint.Put("/:id", s.handleUpdateContact)
-	contactEndpoint.Delete("/:id", s.handleDeleteContact)
-
-	contactEndpoint.Post("/:contactId/documents", s.handleCreateContactDocument)
-	contactEndpoint.Put("/:contactId/documents/:documentId", s.handleUpdateContactDocument)
-	contactEndpoint.Delete("/:contactId/documents/:documentId", s.handleDeleteContactDocument)
-
-	contactEndpoint.Post("/:contactId/accounts", s.handleCreateContactAccount)
-	contactEndpoint.Put("/:contactId/accounts/:accountId", s.handleUpdateContactAccount)
-	contactEndpoint.Delete("/:contactId/accounts/:accountId", s.handleDeleteContactAccount)
+	accountEndpoint := mainEndpoint.Group("/account", s.shouldBeUser)
+	accountEndpoint.Get("/profile", s.handleGetProfile)
+	accountEndpoint.Patch("/password", s.handleUpdatePassword)
 
 	disbursementEndpoint := mainEndpoint.Group("/disbursements", s.shouldBeUser)
 	disbursementEndpoint.Get("/", s.handleGetDisbursements)

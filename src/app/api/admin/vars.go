@@ -12,7 +12,7 @@ type SignInResponse struct {
 type UpdatePasswordRequest struct {
 	Password                string `json:"password" validate:"required"`
 	NewPassword             string `json:"new_password" validate:"required,min=8"`
-	NewPasswordConfirmation string `json:"new_password_confirmation" validate:"required,eqField=NewPassword"`
+	NewPasswordConfirmation string `json:"new_password_confirmation" validate:"required,eqfield=NewPassword"`
 }
 
 type CreateUserRequest struct {
@@ -23,7 +23,7 @@ type CreateUserRequest struct {
 	PhoneCode            *string `json:"phone_code,omitempty" validate:"omitempty,max=5"`
 	PhoneNo              *string `json:"phone_no,omitempty" validate:"omitempty,max=15"`
 	Password             string  `json:"password" validate:"required,min=8"`
-	PasswordConfirmation string  `json:"password_confirmation" validate:"required,eqField=Password"`
+	PasswordConfirmation string  `json:"password_confirmation" validate:"required,eqfield=Password"`
 }
 
 type UpdateUserRequest struct {
@@ -34,7 +34,7 @@ type UpdateUserRequest struct {
 	PhoneCode            *string `json:"phone_code,omitempty" validate:"omitempty,max=5"`
 	PhoneNo              *string `json:"phone_no,omitempty" validate:"omitempty,max=15"`
 	Password             *string `json:"password,omitempty" validate:"omitempty,min=8"`
-	PasswordConfirmation *string `json:"password_confirmation,omitempty" validate:"omitempty,eqField=Password"`
+	PasswordConfirmation *string `json:"password_confirmation,omitempty" validate:"omitempty,eqfield=Password"`
 }
 
 type CreateAgentRequest struct {
@@ -50,7 +50,7 @@ type CreateAgentRequest struct {
 	Name                 string  `json:"name" validate:"required,min=5,max=100"`
 	Username             string  `json:"username" validate:"required,min=5,max=50"`
 	Password             string  `json:"password" validate:"required,min=8"`
-	PasswordConfirmation string  `json:"password_confirmation" validate:"required,eqField=Password"`
+	PasswordConfirmation string  `json:"password_confirmation" validate:"required,eqfield=Password"`
 }
 
 type UpdateAgentRequest struct {

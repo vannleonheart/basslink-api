@@ -1,12 +1,13 @@
 package admin
 
 func (s *Service) InitRouter() {
-	mainEndpoint := s.App.HttpServer.Handler.Group("/office", s.handleSession)
+	mainEndpoint := s.App.HttpServer.Handler.Group("/admin", s.handleSession)
 
 	authEndpoint := mainEndpoint.Group("/auth", s.shouldBeGuest)
 	authEndpoint.Post("/signin", s.handleSignIn)
 
 	accountEndpoint := mainEndpoint.Group("/account", s.shouldBeUser([]string{}))
+	accountEndpoint.Get("/profile", s.handleGetProfile)
 	accountEndpoint.Patch("/password", s.handleUpdatePassword)
 
 	userEndpoint := mainEndpoint.Group("/users", s.shouldBeUser([]string{}))

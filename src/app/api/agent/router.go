@@ -6,6 +6,10 @@ func (s *Service) InitRouter() {
 	authEndpoint := mainEndpoint.Group("/auth", s.shouldBeGuest)
 	authEndpoint.Post("/signin", s.handleSignIn)
 
+	accountEndpoint := mainEndpoint.Group("/account", s.shouldBeUser([]string{}))
+	accountEndpoint.Get("/profile", s.handleGetProfile)
+	accountEndpoint.Patch("/password", s.handleUpdatePassword)
+
 	agentUserEndpoint := mainEndpoint.Group("/agent_users", s.shouldBeUser([]string{}))
 	agentUserEndpoint.Get("/", s.handleGetAgentUsers)
 	agentUserEndpoint.Get("/:id", s.handleGetAgentUser)
@@ -32,6 +36,7 @@ func (s *Service) InitRouter() {
 	contactEndpoint.Put("/:contactId/documents/:documentId", s.handleUpdateContactDocument)
 	contactEndpoint.Delete("/:contactId/documents/:documentId", s.handleDeleteContactDocument)
 
+	contactEndpoint.Get("/:contactId/accounts", s.handleGetContactAccounts)
 	contactEndpoint.Post("/:contactId/accounts", s.handleCreateContactAccount)
 	contactEndpoint.Put("/:contactId/accounts/:accountId", s.handleUpdateContactAccount)
 	contactEndpoint.Delete("/:contactId/accounts/:accountId", s.handleDeleteContactAccount)

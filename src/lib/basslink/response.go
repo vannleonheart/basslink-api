@@ -18,7 +18,7 @@ func NewErrorResponse(c *fiber.Ctx, err *AppError) error {
 	statusCode := fiber.StatusInternalServerError
 	resp := Response{
 		Status:  "error",
-		Code:    fmt.Sprintf("%s%s%s", err.Code, err.Service, err.Kind),
+		Code:    fmt.Sprintf("%s.%s", err.Code, err.Kind),
 		Message: err.Error(),
 		Data:    err.Data,
 	}
@@ -31,11 +31,11 @@ func NewErrorResponse(c *fiber.Ctx, err *AppError) error {
 	return c.Status(statusCode).JSON(resp)
 }
 
-func NewSuccessResponse(c *fiber.Ctx, service, message string, data interface{}) error {
+func NewSuccessResponse(c *fiber.Ctx, message string, data interface{}) error {
 	statusCode := fiber.StatusOK
 	resp := Response{
 		Status:  "success",
-		Code:    fmt.Sprintf("200%s00", service),
+		Code:    "200.00",
 		Message: message,
 		Data:    data,
 	}

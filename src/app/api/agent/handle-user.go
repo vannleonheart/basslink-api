@@ -9,30 +9,30 @@ import (
 	"gorm.io/gorm"
 )
 
-func (s *Service) getUsers(agent *basslink.Agent) (*[]basslink.User, error) {
+func (s *Service) getUsers() (*[]basslink.User, error) {
 	var users []basslink.User
 
-	if err := s.App.DB.Connection.Where("agent_id = ?", agent.Id).Find(&users).Error; err != nil {
+	if err := s.App.DB.Connection.Find(&users).Error; err != nil {
 		return nil, err
 	}
 
 	return &users, nil
 }
 
-func (s *Service) getUser(agent *basslink.Agent, userId string) (*basslink.User, error) {
+func (s *Service) getUser(userId string) (*basslink.User, error) {
 	var user basslink.User
 
-	if err := s.App.DB.Connection.Where("agent_id = ?", agent.Id).First(&user, userId).Error; err != nil {
+	if err := s.App.DB.Connection.Where("id = ?", userId).First(&user).Error; err != nil {
 		return nil, err
 	}
 
 	return &user, nil
 }
 
-func (s *Service) updateUser(agent *basslink.Agent, userId string, req *UpdateUserRequest) error {
+func (s *Service) updateUser(userId string, req *UpdateUserRequest) error {
 	var selectedUser basslink.User
 
-	if err := s.App.DB.Connection.Where("agent_id = ?", agent.Id).First(&selectedUser, userId).Error; err != nil {
+	if err := s.App.DB.Connection.Where("id = ?", userId).First(&selectedUser).Error; err != nil {
 		return err
 	}
 
@@ -51,29 +51,51 @@ func (s *Service) updateUser(agent *basslink.Agent, userId string, req *UpdateUs
 	now := time.Now().Unix()
 
 	updatedUserData := map[string]interface{}{
-		"username":       req.Username,
-		"name":           req.Name,
-		"gender":         req.Gender,
-		"birthdate":      req.Birthdate,
-		"country":        req.Country,
-		"region":         req.Region,
-		"city":           req.City,
-		"address":        req.Address,
-		"email":          req.Email,
-		"phone_code":     req.PhoneCode,
-		"phone_no":       req.PhoneNo,
-		"identity_type":  req.IdentityType,
-		"identity_no":    req.IdentityNo,
-		"occupation":     req.Occupation,
-		"portrait_image": req.PortraitImage,
-		"identity_image": req.IdentityImage,
-		"notes":          req.Notes,
-		"updated":        now,
+		"username":      req.Username,
+		"user_type":     req.CustomerType,
+		"name":          req.CustomerName,
+		"gender":        req.CustomerGender,
+		"birthdate":     req.CustomerBirthdate,
+		"country":       req.CustomerCountry,
+		"region":        req.CustomerRegion,
+		"city":          req.CustomerCity,
+		"address":       req.CustomerAddress,
+		"email":         req.CustomerEmail,
+		"phone_code":    req.CustomerPhoneCode,
+		"phone_no":      req.CustomerPhoneNo,
+		"identity_type": req.CustomerIdentityType,
+		"identity_no":   req.CustomerIdentityNo,
+		"occupation":    req.CustomerOccupation,
+		"notes":         req.CustomerNotes,
+		"updated":       now,
+	}
+
+	var documents []basslink.UserDocument
+
+	if req.CustomerDocuments != nil && len(*req.CustomerDocuments) > 0 {
+		for _, document := range *req.CustomerDocuments {
+			if newDocumentId, e := uuid.NewV7(); e == nil {
+				documents = append(documents, basslink.UserDocument{
+					Id:           newDocumentId.String(),
+					UserId:       selectedUser.Id,
+					DocumentType: document.DocumentType,
+					DocumentData: document.DocumentData,
+					Notes:        document.Notes,
+					Created:      now,
+				})
+			}
+		}
 	}
 
 	if err := s.App.DB.Connection.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(basslink.User{}).Where("id = ? AND agent_id", selectedUser.Id, agent.Id).Updates(updatedUserData).Error; err != nil {
+		if err := tx.Model(basslink.User{}).Where("id = ?", selectedUser.Id).Updates(updatedUserData).Error; err != nil {
 			return err
+		}
+
+		if len(documents) > 0 {
+			if err := tx.CreateInBatches(&documents, len(documents)).Error; err != nil {
+				return err
+			}
 		}
 
 		if req.Password != nil && *req.Password != "" {
@@ -96,14 +118,16 @@ func (s *Service) updateUser(agent *basslink.Agent, userId string, req *UpdateUs
 }
 
 func (s *Service) createUser(agent *basslink.Agent, req *CreateUserRequest) error {
-	var existingUsers []basslink.User
+	if req.Username != nil {
+		var existingUsers []basslink.User
 
-	if err := s.App.DB.Connection.Where("username = ?", req.Username).Limit(1).Find(&existingUsers).Error; err != nil {
-		return err
-	}
+		if err := s.App.DB.Connection.Where("username = ?", req.Username).Limit(1).Find(&existingUsers).Error; err != nil {
+			return err
+		}
 
-	if len(existingUsers) > 0 {
-		return errors.New("username already exist")
+		if len(existingUsers) > 0 {
+			return errors.New("username already exist")
+		}
 	}
 
 	newUserId, err := uuid.NewV7()
@@ -117,34 +141,45 @@ func (s *Service) createUser(agent *basslink.Agent, req *CreateUserRequest) erro
 		Id:            newUserId.String(),
 		AgentId:       agent.Id,
 		Username:      req.Username,
-		Name:          req.Name,
-		Gender:        req.Gender,
-		Birthdate:     req.Birthdate,
-		Country:       req.Country,
-		Region:        req.Region,
-		City:          req.City,
-		Address:       req.Address,
-		Email:         req.Email,
-		PhoneCode:     req.PhoneCode,
-		PhoneNo:       req.PhoneNo,
-		IdentityType:  req.IdentityType,
-		IdentityNo:    req.IdentityNo,
-		Occupation:    req.Occupation,
-		PortraitImage: req.PortraitImage,
-		IdentityImage: req.IdentityImage,
-		Notes:         req.Notes,
+		UserType:      req.CustomerType,
+		Name:          req.CustomerName,
+		Gender:        req.CustomerGender,
+		Birthdate:     req.CustomerBirthdate,
+		Citizenship:   req.CustomerCitizenship,
+		IdentityType:  req.CustomerIdentityType,
+		IdentityNo:    req.CustomerIdentityNo,
+		Country:       req.CustomerCountry,
+		Region:        req.CustomerRegion,
+		City:          req.CustomerCity,
+		Address:       req.CustomerAddress,
+		Email:         req.CustomerEmail,
+		PhoneCode:     req.CustomerPhoneCode,
+		PhoneNo:       req.CustomerPhoneNo,
+		Occupation:    req.CustomerOccupation,
+		Notes:         req.CustomerNotes,
 		IsVerified:    false,
 		EmailVerified: false,
 		PhoneVerified: false,
 		IsEnable:      true,
 		Created:       now,
+		Updated:       nil,
 	}
 
-	newUserCredential := basslink.UserCredential{
-		UserId:         newUser.Id,
-		CredentialType: "password",
-		CredentialData: s.App.HashPassword(req.Password),
-		Updated:        now,
+	var documents []basslink.UserDocument
+
+	if req.CustomerDocuments != nil && len(*req.CustomerDocuments) > 0 {
+		for _, document := range *req.CustomerDocuments {
+			if newDocumentId, e := uuid.NewV7(); e == nil {
+				documents = append(documents, basslink.UserDocument{
+					Id:           newDocumentId.String(),
+					UserId:       newUser.Id,
+					DocumentType: document.DocumentType,
+					DocumentData: document.DocumentData,
+					Notes:        document.Notes,
+					Created:      now,
+				})
+			}
+		}
 	}
 
 	if err = s.App.DB.Connection.Transaction(func(tx *gorm.DB) error {
@@ -152,8 +187,22 @@ func (s *Service) createUser(agent *basslink.Agent, req *CreateUserRequest) erro
 			return err
 		}
 
-		if err = tx.Create(&newUserCredential).Error; err != nil {
-			return err
+		if len(documents) > 0 {
+			if err = tx.CreateInBatches(&documents, len(documents)).Error; err != nil {
+				return err
+			}
+		}
+
+		if req.Password != nil && len(*req.Password) > 0 {
+			newUserCredential := basslink.UserCredential{
+				UserId:         newUser.Id,
+				CredentialType: "password",
+				CredentialData: s.App.HashPassword(*req.Password),
+				Updated:        now,
+			}
+			if err = tx.Create(&newUserCredential).Error; err != nil {
+				return err
+			}
 		}
 
 		return nil
@@ -164,17 +213,17 @@ func (s *Service) createUser(agent *basslink.Agent, req *CreateUserRequest) erro
 	return nil
 }
 
-func (s *Service) toggleUserEnable(agent *basslink.Agent, userId string) error {
+func (s *Service) toggleUserEnable(userId string) error {
 	var selectedUser basslink.User
 
-	if err := s.App.DB.Connection.Where("agent_id = ?", agent.Id).First(&selectedUser, userId).Error; err != nil {
+	if err := s.App.DB.Connection.Where("id = ?", userId).First(&selectedUser).Error; err != nil {
 		return err
 	}
 
 	newUserEnableValue := !selectedUser.IsEnable
 
 	if err := s.App.DB.Connection.Transaction(func(tx *gorm.DB) error {
-		return tx.Model(basslink.User{}).Where("id = ? AND agent_id = ?", selectedUser.Id, agent.Id).Update("is_enable", newUserEnableValue).Error
+		return tx.Model(basslink.User{}).Where("id = ?", selectedUser.Id).Update("is_enable", newUserEnableValue).Error
 	}); err != nil {
 		return err
 	}

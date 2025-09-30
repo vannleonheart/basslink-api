@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"strings"
 
 	"github.com/go-playground/locales/en"
 	ut "github.com/go-playground/universal-translator"
@@ -20,6 +21,14 @@ func (app *App) CreateJwtToken(claims jwt.Claims) (string, error) {
 	t := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
 	return t.SignedString([]byte(app.Config.JwtKey))
+}
+
+func (app *App) FormatPhoneCode(phoneCode string) string {
+	phoneCode = strings.TrimSpace(phoneCode)
+	if phoneCode[0] == '+' {
+		phoneCode = phoneCode[1:]
+	}
+	return phoneCode
 }
 
 func (app *App) HashPassword(password string) string {

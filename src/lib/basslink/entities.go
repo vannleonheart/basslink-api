@@ -15,6 +15,7 @@ const (
 	TableContactAccounts          = "contact_accounts"
 	TableDeposits                 = "deposits"
 	TableDisbursements            = "disbursements"
+	TableCurrencies               = "currencies"
 
 	AdministratorRoleRoot  = "root"
 	AdministratorRoleSuper = "super"
@@ -58,7 +59,7 @@ type AdministratorCredential struct {
 func (t AdministratorCredential) TableName() string { return TableAdministratorCredentials }
 
 type Agent struct {
-	Id         string  `json:"id"`
+	Id         string  `json:"id" gorm:"primaryKey"`
 	Name       string  `json:"name"`
 	Country    *string `json:"country,omitempty"`
 	Region     *string `json:"region,omitempty"`
@@ -119,22 +120,22 @@ func (t AgentUserCredential) TableName() string { return TableAgentUserCredentia
 type User struct {
 	Id            string  `json:"id"`
 	AgentId       string  `json:"agent_id"`
-	Username      string  `json:"username"`
+	Username      *string `json:"username"`
+	UserType      string  `json:"user_type"`
 	Name          string  `json:"name"`
 	Gender        *string `json:"gender,omitempty"`
 	Birthdate     *string `json:"birthdate,omitempty"`
+	Citizenship   string  `json:"citizenship"`
+	IdentityType  string  `json:"identity_type"`
+	IdentityNo    string  `json:"identity_no"`
 	Country       *string `json:"country,omitempty"`
 	Region        *string `json:"region,omitempty"`
 	City          *string `json:"city,omitempty"`
 	Address       *string `json:"address,omitempty"`
-	Email         string  `json:"email"`
+	Email         *string `json:"email,omitempty"`
 	PhoneCode     *string `json:"phone_code,omitempty"`
 	PhoneNo       *string `json:"phone_no,omitempty"`
-	IdentityType  *string `json:"identity_type,omitempty"`
-	IdentityNo    *string `json:"identity_no,omitempty"`
 	Occupation    *string `json:"occupation,omitempty"`
-	PortraitImage *string `json:"portrait_image,omitempty"`
-	IdentityImage *string `json:"identity_image,omitempty"`
 	Notes         *string `json:"notes,omitempty"`
 	IsVerified    bool    `json:"is_verified"`
 	EmailVerified bool    `json:"email_verified"`
@@ -169,30 +170,29 @@ type UserDocument struct {
 func (t UserDocument) TableName() string { return TableUserDocuments }
 
 type Contact struct {
-	Id            string            `json:"id"`
-	AgentId       string            `json:"agent_id"`
-	UserId        *string           `json:"user_id,omitempty"`
-	Name          string            `json:"name"`
-	Birthdate     *string           `json:"birthdate,omitempty"`
-	Gender        *string           `json:"gender,omitempty"`
-	Country       *string           `json:"country,omitempty"`
-	Region        *string           `json:"region,omitempty"`
-	City          *string           `json:"city,omitempty"`
-	Address       *string           `json:"address,omitempty"`
-	Email         *string           `json:"email,omitempty"`
-	PhoneCode     *string           `json:"phone_code,omitempty"`
-	PhoneNo       *string           `json:"phone_no,omitempty"`
-	IdentityType  *string           `json:"identity_type,omitempty"`
-	IdentityNo    *string           `json:"identity_no,omitempty"`
-	Occupation    *string           `json:"occupation,omitempty"`
-	IdentityImage *string           `json:"identity_image,omitempty"`
-	PortraitImage *string           `json:"portrait_image,omitempty"`
-	Notes         *string           `json:"notes,omitempty"`
-	IsVerified    bool              `json:"is_verified"`
-	Created       int64             `json:"created"`
-	Updated       *int64            `json:"updated,omitempty"`
-	Documents     []ContactDocument `json:"documents,omitempty" gorm:"foreignKey:ContactId;reference:Id"`
-	Accounts      []ContactAccount  `json:"accounts,omitempty" gorm:"foreignKey:ContactId;reference:Id"`
+	Id           string            `json:"id"`
+	AgentId      string            `json:"agent_id"`
+	ContactType  string            `json:"contact_type"`
+	Name         string            `json:"name"`
+	Gender       *string           `json:"gender,omitempty"`
+	Birthdate    *string           `json:"birthdate,omitempty"`
+	Citizenship  string            `json:"citizenship"`
+	IdentityType string            `json:"identity_type"`
+	IdentityNo   string            `json:"identity_no"`
+	Country      *string           `json:"country,omitempty"`
+	Region       *string           `json:"region,omitempty"`
+	City         *string           `json:"city,omitempty"`
+	Address      *string           `json:"address,omitempty"`
+	Email        *string           `json:"email,omitempty"`
+	PhoneCode    *string           `json:"phone_code,omitempty"`
+	PhoneNo      *string           `json:"phone_no,omitempty"`
+	Occupation   *string           `json:"occupation,omitempty"`
+	Notes        *string           `json:"notes,omitempty"`
+	IsVerified   bool              `json:"is_verified"`
+	Created      int64             `json:"created"`
+	Updated      *int64            `json:"updated,omitempty"`
+	Documents    []ContactDocument `json:"documents,omitempty" gorm:"foreignKey:ContactId;reference:Id"`
+	Accounts     []ContactAccount  `json:"accounts,omitempty" gorm:"foreignKey:ContactId;reference:Id"`
 }
 
 func (t Contact) TableName() string { return TableContacts }
@@ -221,8 +221,6 @@ type ContactAccount struct {
 	OwnerName   string  `json:"owner_name"`
 	No          string  `json:"no"`
 	Country     *string `json:"country,omitempty"`
-	Region      *string `json:"region,omitempty"`
-	City        *string `json:"city,omitempty"`
 	Address     *string `json:"address,omitempty"`
 	Email       *string `json:"email,omitempty"`
 	Website     *string `json:"website,omitempty"`
@@ -239,7 +237,6 @@ type Disbursement struct {
 	Id           string  `json:"id"`
 	AgentId      string  `json:"agent_id"`
 	UserId       *string `json:"user_id,omitempty"`
-	FromContact  string  `json:"from_contact"`
 	FromCurrency string  `json:"from_currency"`
 	FromAmount   float64 `json:"from_amount"`
 	ToContact    string  `json:"to_contact"`
@@ -263,3 +260,13 @@ type Disbursement struct {
 }
 
 func (t Disbursement) TableName() string { return TableDisbursements }
+
+type Currency struct {
+	Id       string `json:"id"`
+	Name     string `json:"name"`
+	Symbol   string `json:"symbol"`
+	Type     string `json:"type"`
+	IsActive bool   `json:"is_active"`
+}
+
+func (t Currency) TableName() string { return TableCurrencies }

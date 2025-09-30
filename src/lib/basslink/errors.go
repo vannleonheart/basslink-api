@@ -34,10 +34,9 @@ const (
 )
 
 type AppError struct {
-	Service  string
+	Code     string
 	Kind     string
 	Data     interface{}
-	Code     string
 	internal string
 	message  string
 }
@@ -50,12 +49,11 @@ func (e *AppError) GetInternalMessage() string {
 	return e.internal
 }
 
-func NewError(service, kind, code, message, internal string, data interface{}) *AppError {
+func NewAppError(message, code, kind, internal string, data interface{}) *AppError {
 	return &AppError{
-		Service:  service,
+		Code:     code,
 		Kind:     kind,
 		Data:     data,
-		Code:     code,
 		internal: internal,
 		message:  message,
 	}

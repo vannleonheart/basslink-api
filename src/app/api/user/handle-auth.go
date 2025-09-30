@@ -46,6 +46,10 @@ func (s *Service) signIn(req *SignInRequest) (*SignInResponse, error) {
 	}, nil
 }
 
+func (s *Service) getProfile(user *basslink.User) (*basslink.User, error) {
+	return user, nil
+}
+
 func (s *Service) updatePassword(user *basslink.User, req *UpdatePasswordRequest) error {
 	var credential basslink.UserCredential
 

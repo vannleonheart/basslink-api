@@ -54,7 +54,7 @@ func (c *DBClient) Connect() error {
 	}
 
 	connectionString := fmt.Sprintf(
-		"host=%s user=%s password=%s dbname=%s port=%s sslmode=disable TimeZone=Asia/Jakarta",
+		"host=%s user=%s password=%s dbname=%s port=%s sslmode=require TimeZone=Asia/Jakarta",
 		c.Config.Host,
 		c.Config.User,
 		c.Config.Password,

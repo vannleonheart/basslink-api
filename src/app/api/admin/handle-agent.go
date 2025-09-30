@@ -2,9 +2,7 @@ package admin
 
 import (
 	"CRM/src/lib/basslink"
-	"crypto/sha256"
 	"errors"
-	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -24,7 +22,7 @@ func (s *Service) getAgents() (*[]basslink.Agent, error) {
 func (s *Service) getAgent(agentId string) (*basslink.Agent, error) {
 	var agent basslink.Agent
 
-	if err := s.App.DB.Connection.First(&agent, agentId).Error; err != nil {
+	if err := s.App.DB.Connection.Where("id = ?", agentId).First(&agent).Error; err != nil {
 		return nil, err
 	}
 
@@ -34,11 +32,16 @@ func (s *Service) getAgent(agentId string) (*basslink.Agent, error) {
 func (s *Service) updateAgent(agentId string, req *UpdateAgentRequest) error {
 	var selectedAgent basslink.Agent
 
-	if err := s.App.DB.Connection.First(&selectedAgent, agentId).Error; err != nil {
+	if err := s.App.DB.Connection.Where("id = ?", agentId).First(&selectedAgent).Error; err != nil {
 		return err
 	}
 
 	now := time.Now().Unix()
+
+	if req.PhoneCode != nil {
+		phoneCode := s.App.FormatPhoneCode(*req.PhoneCode)
+		req.PhoneCode = &phoneCode
+	}
 
 	updatedAgentData := map[string]interface{}{
 		"name":       req.AgentName,
@@ -84,6 +87,11 @@ func (s *Service) createAgent(req *CreateAgentRequest) error {
 		return err
 	}
 
+	if req.PhoneCode != nil {
+		phoneCode := s.App.FormatPhoneCode(*req.PhoneCode)
+		req.PhoneCode = &phoneCode
+	}
+
 	newAgent := basslink.Agent{
 		Id:         newAgentId.String(),
 		Name:       req.AgentName,
@@ -119,13 +127,10 @@ func (s *Service) createAgent(req *CreateAgentRequest) error {
 		Created:   now,
 	}
 
-	hasher := sha256.New()
-	hasher.Write([]byte(req.Password))
-	hashedPassword := hasher.Sum(nil)
 	newAgentUserCredential := basslink.AgentUserCredential{
 		AgentUserId:    newAgentUser.Id,
 		CredentialType: "password",
-		CredentialData: fmt.Sprintf("%x", hashedPassword),
+		CredentialData: s.App.HashPassword(req.Password),
 		Updated:        now,
 	}
 
@@ -153,7 +158,7 @@ func (s *Service) createAgent(req *CreateAgentRequest) error {
 func (s *Service) toggleAgentEnable(agentId string) error {
 	var selectedAgent basslink.Agent
 
-	if err := s.App.DB.Connection.First(&selectedAgent, agentId).Error; err != nil {
+	if err := s.App.DB.Connection.Where("id = ?", agentId).First(&selectedAgent).Error; err != nil {
 		return err
 	}
 
