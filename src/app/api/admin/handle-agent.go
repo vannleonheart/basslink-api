@@ -102,7 +102,6 @@ func (s *Service) createAgent(req *CreateAgentRequest) error {
 		PhoneCode:  req.PhoneCode,
 		PhoneNo:    req.PhoneNo,
 		Email:      req.Email,
-		Website:    req.Website,
 		Timezone:   nil,
 		IsVerified: false,
 		IsEnable:   true,

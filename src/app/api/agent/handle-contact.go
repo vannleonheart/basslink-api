@@ -21,7 +21,7 @@ func (s *Service) getContacts() (*[]basslink.Contact, error) {
 func (s *Service) getContact(contactId string) (*basslink.Contact, error) {
 	var contact basslink.Contact
 
-	if err := s.App.DB.Connection.Preload("Documents", "Accounts").Where("id = ?", contactId).First(&contact).Error; err != nil {
+	if err := s.App.DB.Connection.Preload("Documents").Preload("Accounts").Where("id = ?", contactId).First(&contact).Error; err != nil {
 		return nil, err
 	}
 
@@ -73,60 +73,88 @@ func (s *Service) updateContact(contactId string, req *UpdateContactRequest) err
 
 	if req.ContactDocuments != nil && len(*req.ContactDocuments) > 0 {
 		for _, document := range *req.ContactDocuments {
-			if newDocumentId, e := uuid.NewV7(); e == nil {
-				documents = append(documents, basslink.ContactDocument{
-					Id:           newDocumentId.String(),
-					ContactId:    selectedContact.Id,
-					DocumentType: document.DocumentType,
-					DocumentData: document.DocumentData,
-					Notes:        document.Notes,
-					IsVerified:   false,
-					Created:      now,
-				})
+			documentId := ""
+
+			if document.Id != nil && len(*document.Id) > 0 {
+				documentId = *document.Id
+			} else {
+				newDocumentId, e := uuid.NewV7()
+				if e != nil {
+					return e
+				}
+				documentId = newDocumentId.String()
 			}
+
+			documents = append(documents, basslink.ContactDocument{
+				Id:           documentId,
+				ContactId:    selectedContact.Id,
+				DocumentType: document.DocumentType,
+				DocumentData: document.DocumentData,
+				Notes:        document.Notes,
+				IsVerified:   false,
+				Created:      now,
+			})
 		}
 	}
 
 	if req.ContactAccounts != nil && len(*req.ContactAccounts) > 0 {
 		for _, account := range *req.ContactAccounts {
-			if newAccountId, e := uuid.NewV7(); e == nil {
-				if account.BankPhoneCode != nil {
-					phoneCode := s.App.FormatPhoneCode(*account.BankPhoneCode)
-					account.BankPhoneCode = &phoneCode
+			accountId := ""
+
+			if account.Id != nil && len(*account.Id) > 0 {
+				accountId = *account.Id
+			} else {
+				newAccountId, e := uuid.NewV7()
+				if e != nil {
+					return e
 				}
-				if account.BankPhoneNo != nil {
-					phoneNo := *account.BankPhoneNo
-					if phoneNo[0] == '0' {
-						phoneNo = phoneNo[1:]
-					}
-					account.BankPhoneNo = &phoneNo
-				}
-				accounts = append(accounts, basslink.ContactAccount{
-					Id:          newAccountId.String(),
-					ContactId:   selectedContact.Id,
-					AccountType: "",
-					BankId:      "",
-					BankName:    account.BankName,
-					BankCode:    account.BankCode,
-					BankSwift:   account.BankSwiftCode,
-					OwnerName:   account.BankAccountName,
-					No:          account.BankAccountNo,
-					Country:     &account.BankCountry,
-					Address:     account.BankAddress,
-					Email:       account.BankEmail,
-					Website:     account.BankWebsite,
-					PhoneCode:   account.BankPhoneCode,
-					PhoneNo:     account.BankPhoneNo,
-					Notes:       account.BankNotes,
-					Created:     now,
-					Updated:     nil,
-				})
+				accountId = newAccountId.String()
 			}
+
+			if account.BankPhoneCode != nil {
+				phoneCode := s.App.FormatPhoneCode(*account.BankPhoneCode)
+				account.BankPhoneCode = &phoneCode
+			}
+			if account.BankPhoneNo != nil {
+				phoneNo := *account.BankPhoneNo
+				if phoneNo[0] == '0' {
+					phoneNo = phoneNo[1:]
+				}
+				account.BankPhoneNo = &phoneNo
+			}
+			accounts = append(accounts, basslink.ContactAccount{
+				Id:          accountId,
+				ContactId:   selectedContact.Id,
+				AccountType: "",
+				BankId:      "",
+				BankName:    account.BankName,
+				BankCode:    account.BankCode,
+				BankSwift:   account.BankSwiftCode,
+				OwnerName:   account.BankAccountName,
+				No:          account.BankAccountNo,
+				Country:     &account.BankCountry,
+				Address:     account.BankAddress,
+				Email:       account.BankEmail,
+				Website:     account.BankWebsite,
+				PhoneCode:   account.BankPhoneCode,
+				PhoneNo:     account.BankPhoneNo,
+				Notes:       account.BankNotes,
+				Created:     now,
+				Updated:     nil,
+			})
 		}
 	}
 
 	if err := s.App.DB.Connection.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(basslink.Contact{}).Where("id = ?", selectedContact.Id).Updates(updatedContactData).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Model(basslink.ContactDocument{}).Where("contact_id = ?", selectedContact.Id).Delete(nil).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Model(basslink.ContactAccount{}).Where("contact_id = ?", selectedContact.Id).Delete(nil).Error; err != nil {
 			return err
 		}
 

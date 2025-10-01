@@ -69,7 +69,6 @@ type Agent struct {
 	PhoneCode  *string `json:"phone_code,omitempty"`
 	PhoneNo    *string `json:"phone_no,omitempty"`
 	Email      *string `json:"email,omitempty"`
-	Website    *string `json:"website,omitempty"`
 	Timezone   *int    `json:"timezone,omitempty"`
 	IsVerified bool    `json:"is_verified"`
 	IsEnable   bool    `json:"is_enabled"`
@@ -119,31 +118,32 @@ type AgentUserCredential struct {
 func (t AgentUserCredential) TableName() string { return TableAgentUserCredentials }
 
 type User struct {
-	Id            string  `json:"id"`
-	AgentId       string  `json:"agent_id"`
-	Username      *string `json:"username"`
-	UserType      string  `json:"user_type"`
-	Name          string  `json:"name"`
-	Gender        *string `json:"gender,omitempty"`
-	Birthdate     *string `json:"birthdate,omitempty"`
-	Citizenship   string  `json:"citizenship"`
-	IdentityType  string  `json:"identity_type"`
-	IdentityNo    string  `json:"identity_no"`
-	Country       *string `json:"country,omitempty"`
-	Region        *string `json:"region,omitempty"`
-	City          *string `json:"city,omitempty"`
-	Address       *string `json:"address,omitempty"`
-	Email         *string `json:"email,omitempty"`
-	PhoneCode     *string `json:"phone_code,omitempty"`
-	PhoneNo       *string `json:"phone_no,omitempty"`
-	Occupation    *string `json:"occupation,omitempty"`
-	Notes         *string `json:"notes,omitempty"`
-	IsVerified    bool    `json:"is_verified"`
-	EmailVerified bool    `json:"email_verified"`
-	PhoneVerified bool    `json:"phone_verified"`
-	IsEnable      bool    `json:"is_enabled"`
-	Created       int64   `json:"created,omitempty"`
-	Updated       *int64  `json:"updated,omitempty"`
+	Id            string          `json:"id"`
+	AgentId       string          `json:"agent_id"`
+	Username      *string         `json:"username"`
+	UserType      string          `json:"user_type"`
+	Name          string          `json:"name"`
+	Gender        *string         `json:"gender,omitempty"`
+	Birthdate     *string         `json:"birthdate,omitempty"`
+	Citizenship   string          `json:"citizenship"`
+	IdentityType  string          `json:"identity_type"`
+	IdentityNo    string          `json:"identity_no"`
+	Country       *string         `json:"country,omitempty"`
+	Region        *string         `json:"region,omitempty"`
+	City          *string         `json:"city,omitempty"`
+	Address       *string         `json:"address,omitempty"`
+	Email         *string         `json:"email,omitempty"`
+	PhoneCode     *string         `json:"phone_code,omitempty"`
+	PhoneNo       *string         `json:"phone_no,omitempty"`
+	Occupation    *string         `json:"occupation,omitempty"`
+	Notes         *string         `json:"notes,omitempty"`
+	IsVerified    bool            `json:"is_verified"`
+	EmailVerified bool            `json:"email_verified"`
+	PhoneVerified bool            `json:"phone_verified"`
+	IsEnable      bool            `json:"is_enabled"`
+	Created       int64           `json:"created,omitempty"`
+	Updated       *int64          `json:"updated,omitempty"`
+	Documents     *[]UserDocument `json:"documents,omitempty" gorm:"foreignKey:UserId;reference:Id"`
 }
 
 func (t User) TableName() string { return TableUsers }

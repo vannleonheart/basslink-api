@@ -46,7 +46,6 @@ type CreateAgentRequest struct {
 	PhoneCode            *string `json:"phone_code,omitempty" validate:"omitempty,max=5"`
 	PhoneNo              *string `json:"phone_no,omitempty" validate:"omitempty,max=15"`
 	Email                *string `json:"email,omitempty" validate:"omitempty,email,max=100"`
-	Website              *string `json:"website,omitempty" validate:"omitempty,url"`
 	Name                 string  `json:"name" validate:"required,min=5,max=100"`
 	Username             string  `json:"username" validate:"required,min=5,max=50"`
 	Password             string  `json:"password" validate:"required,min=8"`

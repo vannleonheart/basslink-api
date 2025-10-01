@@ -85,6 +85,7 @@ type UpdateUserRequest struct {
 	CustomerOccupation   *string `json:"customer_occupation,omitempty" validate:"omitempty"`
 	CustomerNotes        *string `json:"customer_notes,omitempty" validate:"omitempty"`
 	CustomerDocuments    *[]struct {
+		Id           *string `json:"id,omitempty" validate:"omitempty"`
 		DocumentData string  `json:"document_data" validate:"required"`
 		DocumentType string  `json:"document_type" validate:"required"`
 		Notes        *string `json:"notes,omitempty" validate:"omitempty"`
@@ -152,12 +153,14 @@ type UpdateContactRequest struct {
 	ContactOccupation   *string `json:"contact_occupation,omitempty" validate:"omitempty"`
 	ContactNotes        *string `json:"contact_notes,omitempty" validate:"omitempty"`
 	ContactDocuments    *[]struct {
+		Id           *string `json:"id,omitempty" validate:"omitempty"`
 		DocumentData string  `json:"document_data" validate:"required"`
 		DocumentType string  `json:"document_type" validate:"required"`
 		Notes        *string `json:"notes,omitempty" validate:"omitempty"`
 		IsVerified   *bool   `json:"is_verified" validate:"omitempty"`
 	} `json:"contact_documents" validate:"omitempty,dive"`
 	ContactAccounts *[]struct {
+		Id              *string `json:"id,omitempty" validate:"omitempty"`
 		BankName        string  `json:"bank_name" validate:"required"`
 		BankAccountNo   string  `json:"bank_account_no" validate:"required"`
 		BankAccountName string  `json:"bank_account_name" validate:"required"`

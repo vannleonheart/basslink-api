@@ -15,7 +15,7 @@ func (s *Service) getContacts() (*[]basslink.Contact, error) {
 func (s *Service) getContact(contactId string) (*basslink.Contact, error) {
 	var contact basslink.Contact
 
-	if err := s.App.DB.Connection.Preload("Documents", "Accounts").Where("id = ?", contactId).First(&contact).Error; err != nil {
+	if err := s.App.DB.Connection.Preload("Documents").Preload("Accounts").Where("id = ?", contactId).First(&contact).Error; err != nil {
 		return nil, err
 	}
 

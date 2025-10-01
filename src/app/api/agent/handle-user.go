@@ -22,7 +22,7 @@ func (s *Service) getUsers() (*[]basslink.User, error) {
 func (s *Service) getUser(userId string) (*basslink.User, error) {
 	var user basslink.User
 
-	if err := s.App.DB.Connection.Where("id = ?", userId).First(&user).Error; err != nil {
+	if err := s.App.DB.Connection.Preload("Documents").Where("id = ?", userId).First(&user).Error; err != nil {
 		return nil, err
 	}
 
@@ -48,6 +48,19 @@ func (s *Service) updateUser(userId string, req *UpdateUserRequest) error {
 		}
 	}
 
+	if req.CustomerPhoneCode != nil {
+		phoneCode := s.App.FormatPhoneCode(*req.CustomerPhoneCode)
+		req.CustomerPhoneCode = &phoneCode
+	}
+
+	if req.CustomerPhoneNo != nil {
+		phoneNo := *req.CustomerPhoneNo
+		if phoneNo[0] == '0' {
+			phoneNo = phoneNo[1:]
+		}
+		req.CustomerPhoneNo = &phoneNo
+	}
+
 	now := time.Now().Unix()
 
 	updatedUserData := map[string]interface{}{
@@ -56,6 +69,9 @@ func (s *Service) updateUser(userId string, req *UpdateUserRequest) error {
 		"name":          req.CustomerName,
 		"gender":        req.CustomerGender,
 		"birthdate":     req.CustomerBirthdate,
+		"citizenship":   req.CustomerCitizenship,
+		"identity_type": req.CustomerIdentityType,
+		"identity_no":   req.CustomerIdentityNo,
 		"country":       req.CustomerCountry,
 		"region":        req.CustomerRegion,
 		"city":          req.CustomerCity,
@@ -63,8 +79,6 @@ func (s *Service) updateUser(userId string, req *UpdateUserRequest) error {
 		"email":         req.CustomerEmail,
 		"phone_code":    req.CustomerPhoneCode,
 		"phone_no":      req.CustomerPhoneNo,
-		"identity_type": req.CustomerIdentityType,
-		"identity_no":   req.CustomerIdentityNo,
 		"occupation":    req.CustomerOccupation,
 		"notes":         req.CustomerNotes,
 		"updated":       now,
@@ -74,21 +88,35 @@ func (s *Service) updateUser(userId string, req *UpdateUserRequest) error {
 
 	if req.CustomerDocuments != nil && len(*req.CustomerDocuments) > 0 {
 		for _, document := range *req.CustomerDocuments {
-			if newDocumentId, e := uuid.NewV7(); e == nil {
-				documents = append(documents, basslink.UserDocument{
-					Id:           newDocumentId.String(),
-					UserId:       selectedUser.Id,
-					DocumentType: document.DocumentType,
-					DocumentData: document.DocumentData,
-					Notes:        document.Notes,
-					Created:      now,
-				})
+			documentId := ""
+
+			if document.Id != nil && len(*document.Id) > 0 {
+				documentId = *document.Id
+			} else {
+				newDocumentId, e := uuid.NewV7()
+				if e != nil {
+					return e
+				}
+				documentId = newDocumentId.String()
 			}
+
+			documents = append(documents, basslink.UserDocument{
+				Id:           documentId,
+				UserId:       selectedUser.Id,
+				DocumentType: document.DocumentType,
+				DocumentData: document.DocumentData,
+				Notes:        document.Notes,
+				Created:      now,
+			})
 		}
 	}
 
 	if err := s.App.DB.Connection.Transaction(func(tx *gorm.DB) error {
 		if err := tx.Model(basslink.User{}).Where("id = ?", selectedUser.Id).Updates(updatedUserData).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Model(basslink.UserDocument{}).Where("user_id = ?", selectedUser.Id).Delete(nil).Error; err != nil {
 			return err
 		}
 
