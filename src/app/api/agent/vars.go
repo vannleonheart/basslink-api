@@ -280,7 +280,8 @@ type CreateDisbursementRequest struct {
 	BankNotes               *string     `json:"bank_notes,omitempty" validate:"omitempty"`
 	BankUpdate              *bool       `json:"bank_update,omitempty" validate:"omitempty"`
 	Rate                    json.Number `json:"rate" validate:"required"`
-	Fee                     json.Number `json:"fee" validate:"required"`
+	FeePercent              json.Number `json:"fee_percent" validate:"required"`
+	FeeFixed                json.Number `json:"fee_fixed" validate:"required"`
 	TransferType            *string     `json:"transfer_type,omitempty" validate:"omitempty"`
 	TransferDate            *string     `json:"transfer_date,omitempty" validate:"omitempty"`
 	TransferReference       *string     `json:"transfer_reference,omitempty" validate:"omitempty"`

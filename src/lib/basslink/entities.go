@@ -16,6 +16,7 @@ const (
 	TableDeposits                 = "deposits"
 	TableDisbursements            = "disbursements"
 	TableCurrencies               = "currencies"
+	TableDisbursementAttachments  = "disbursement_attachments"
 
 	AdministratorRoleRoot  = "root"
 	AdministratorRoleSuper = "super"
@@ -234,33 +235,79 @@ type ContactAccount struct {
 func (t ContactAccount) TableName() string { return TableContactAccounts }
 
 type Disbursement struct {
-	Id             string          `json:"id"`
-	AgentId        string          `json:"agent_id"`
-	UserId         *string         `json:"user_id,omitempty"`
-	FromCurrency   string          `json:"from_currency"`
-	FromAmount     float64         `json:"from_amount"`
-	ToContact      string          `json:"to_contact"`
-	ToCurrency     string          `json:"to_currency"`
-	ToAmount       float64         `json:"to_amount"`
-	ToAccount      string          `json:"to_account"`
-	RateCurrency   string          `json:"rate_currency"`
-	Rate           float64         `json:"rate"`
-	FeeCurrency    string          `json:"fee_currency"`
-	FeeAmount      float64         `json:"fee_amount"`
-	TransferType   string          `json:"transfer_type"`
-	TransferRef    *string         `json:"transfer_ref,omitempty"`
-	TransferDate   *string         `json:"transfer_date,omitempty"`
-	FundSource     *string         `json:"fund_source,omitempty"`
-	Purpose        *string         `json:"purpose,omitempty"`
-	Notes          *string         `json:"notes,omitempty"`
-	Status         string          `json:"status"`
-	IsSettled      bool            `json:"is_settled"`
-	Created        int64           `json:"created"`
-	Updated        *int64          `json:"updated,omitempty"`
-	TargetAccount  *ContactAccount `json:"target_account,omitempty" gorm:"foreignKey:ToAccount;reference:Id"`
-	TargetCurrency *Currency       `json:"target_currency,omitempty" gorm:"foreignKey:ToCurrency;reference:Id"`
-	User           *User           `json:"user,omitempty" gorm:"foreignKey:UserId;reference:Id"`
-	Contact        *Contact        `json:"contact,omitempty" gorm:"foreignKey:ToContact;reference:Id"`
+	Id                string    `json:"id"`
+	AgentId           string    `json:"agent_id"`
+	UserId            *string   `json:"user_id,omitempty"`
+	FromCurrency      string    `json:"from_currency"`
+	FromAmount        float64   `json:"from_amount"`
+	FromType          string    `json:"from_type"`
+	FromName          string    `json:"from_name"`
+	FromGender        *string   `json:"from_gender,omitempty"`
+	FromBirthdate     *string   `json:"from_birthdate,omitempty"`
+	FromCitizenship   string    `json:"from_citizenship"`
+	FromIdentityType  string    `json:"from_identity_type"`
+	FromIdentityNo    string    `json:"from_identity_no"`
+	FromOccupation    *string   `json:"from_occupation,omitempty"`
+	FromCountry       *string   `json:"from_country,omitempty"`
+	FromRegion        *string   `json:"from_region,omitempty"`
+	FromCity          *string   `json:"from_city,omitempty"`
+	FromAddress       *string   `json:"from_address,omitempty"`
+	FromEmail         *string   `json:"from_email,omitempty"`
+	FromPhoneCode     *string   `json:"from_phone_code,omitempty"`
+	FromPhoneNo       *string   `json:"from_phone_no,omitempty"`
+	FromNotes         *string   `json:"from_notes,omitempty"`
+	ToContact         string    `json:"to_contact"`
+	ToCurrency        string    `json:"to_currency"`
+	ToAmount          float64   `json:"to_amount"`
+	ToType            string    `json:"to_type"`
+	ToName            string    `json:"to_name"`
+	ToGender          *string   `json:"to_gender,omitempty"`
+	ToBirthdate       *string   `json:"to_birthdate,omitempty"`
+	ToCitizenship     string    `json:"to_citizenship"`
+	ToIdentityType    string    `json:"to_identity_type"`
+	ToIdentityNo      string    `json:"to_identity_no"`
+	ToOccupation      *string   `json:"to_occupation,omitempty"`
+	ToCountry         *string   `json:"to_country,omitempty"`
+	ToRegion          *string   `json:"to_region,omitempty"`
+	ToCity            *string   `json:"to_city,omitempty"`
+	ToAddress         *string   `json:"to_address,omitempty"`
+	ToEmail           *string   `json:"to_email,omitempty"`
+	ToPhoneCode       *string   `json:"to_phone_code,omitempty"`
+	ToPhoneNo         *string   `json:"to_phone_no,omitempty"`
+	ToNotes           *string   `json:"to_notes,omitempty"`
+	ToRelationship    *string   `json:"to_relationship,omitempty"`
+	ToAccount         string    `json:"to_account"`
+	ToBankName        string    `json:"to_bank_name"`
+	ToBankAccountNo   string    `json:"to_bank_account_no"`
+	ToBankAccountName string    `json:"to_bank_account_name"`
+	ToBankCountry     string    `json:"to_bank_country"`
+	ToBankCode        *string   `json:"to_bank_code,omitempty"`
+	ToBankSwift       *string   `json:"to_bank_swift,omitempty"`
+	ToBankAddress     *string   `json:"to_bank_address,omitempty"`
+	ToBankEmail       *string   `json:"to_bank_email,omitempty"`
+	ToBankPhoneCode   *string   `json:"to_bank_phone_code,omitempty"`
+	ToBankPhoneNo     *string   `json:"to_bank_phone_no,omitempty"`
+	ToBankWebsite     *string   `json:"to_bank_website,omitempty"`
+	ToBankNotes       *string   `json:"to_bank_notes,omitempty"`
+	RateCurrency      string    `json:"rate_currency"`
+	Rate              float64   `json:"rate"`
+	FeeCurrency       string    `json:"fee_currency"`
+	FeeAmountPercent  float64   `json:"fee_amount_percent"`
+	FeeAmountFixed    float64   `json:"fee_amount_fixed"`
+	FeeTotal          float64   `json:"fee_total"`
+	TransferType      *string   `json:"transfer_type"`
+	TransferRef       *string   `json:"transfer_ref,omitempty"`
+	TransferOn        *string   `json:"transfer_on,omitempty"`
+	TransferDate      *string   `json:"transfer_date,omitempty"`
+	FundSource        *string   `json:"fund_source,omitempty"`
+	Purpose           *string   `json:"purpose,omitempty"`
+	Notes             *string   `json:"notes,omitempty"`
+	Status            string    `json:"status"`
+	IsSettled         bool      `json:"is_settled"`
+	Created           int64     `json:"created"`
+	Updated           *int64    `json:"updated,omitempty"`
+	SourceCurrency    *Currency `json:"source_currency,omitempty" gorm:"foreignKey:FromCurrency;reference:Id"`
+	TargetCurrency    *Currency `json:"target_currency,omitempty" gorm:"foreignKey:ToCurrency;reference:Id"`
 }
 
 func (t Disbursement) TableName() string { return TableDisbursements }
@@ -274,3 +321,14 @@ type Currency struct {
 }
 
 func (t Currency) TableName() string { return TableCurrencies }
+
+type DisbursementAttachment struct {
+	Id             string `json:"id"`
+	DisbursementId string `json:"disbursement_id"`
+	Attachment     string `json:"attachment"`
+	SubmitBy       string `json:"submit_by"`
+	SubmitOwner    string `json:"submit_owner"`
+	SubmitTime     int64  `json:"submit_time"`
+}
+
+func (t DisbursementAttachment) TableName() string { return TableDisbursementAttachments }

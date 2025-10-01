@@ -274,7 +274,13 @@ func (s *Service) handleGetContactAccounts(c *fiber.Ctx) error {
 }
 
 func (s *Service) handleGetDisbursements(c *fiber.Ctx) error {
-	result, err := s.getDisbursements()
+	var req GetDisbursementFilter
+
+	if err := c.QueryParser(&req); err != nil {
+		return err
+	}
+
+	result, err := s.getDisbursements(&req)
 	if err != nil {
 		return err
 	}

@@ -2,6 +2,8 @@ package agent
 
 import (
 	"CRM/src/lib/basslink"
+	"errors"
+	"math"
 	"strings"
 	"time"
 
@@ -12,7 +14,7 @@ import (
 func (s *Service) getDisbursements(agent *basslink.Agent, req *GetDisbursementFilter) (*[]basslink.Disbursement, error) {
 	var disbursements []basslink.Disbursement
 
-	db := s.App.DB.Connection.Preload("User").Preload("Contact").Preload("TargetAccount").Preload("TargetCurrency")
+	db := s.App.DB.Connection.Preload("SourceCurrency").Preload("TargetCurrency")
 
 	if req != nil {
 		if req.Status != nil && *req.Status != "" && strings.ToLower(*req.Status) != "all" {
@@ -76,7 +78,12 @@ func (s *Service) createDisbursement(agent *basslink.Agent, req *CreateDisbursem
 		return err
 	}
 
-	flFee, err := req.Fee.Float64()
+	flFeePercent, err := req.FeePercent.Float64()
+	if err != nil {
+		return err
+	}
+
+	flFeeFixed, err := req.FeeFixed.Float64()
 	if err != nil {
 		return err
 	}
@@ -296,30 +303,107 @@ func (s *Service) createDisbursement(agent *basslink.Agent, req *CreateDisbursem
 		}
 	}
 
+	totalFee := flFeeFixed
+	if flFeePercent > 0 {
+		totalFee += math.Ceil((flFeePercent * flFromAmount) / 100)
+	}
+
+	if flToAmount > ((flFromAmount - totalFee) * flRate) {
+		return errors.New("received amount is greater than expected amount")
+	}
+
 	newDisbursement := basslink.Disbursement{
-		Id:           disbursementId.String(),
-		AgentId:      agent.Id,
-		UserId:       &user.Id,
-		FromCurrency: req.FromCurrency,
-		FromAmount:   flFromAmount,
-		ToContact:    contact.Id,
-		ToCurrency:   req.ToCurrency,
-		ToAmount:     flToAmount,
-		ToAccount:    account.Id,
-		RateCurrency: req.FromCurrency,
-		Rate:         flRate,
-		FeeCurrency:  req.FromCurrency,
-		FeeAmount:    flFee,
-		TransferType: "",
-		TransferRef:  req.TransferReference,
-		TransferDate: req.TransferDate,
-		FundSource:   req.FundSource,
-		Purpose:      req.Purpose,
-		Notes:        req.Notes,
-		Status:       basslink.DisbursementStatusNew,
-		IsSettled:    false,
-		Created:      now,
-		Updated:      nil,
+		Id:                disbursementId.String(),
+		AgentId:           agent.Id,
+		UserId:            &user.Id,
+		FromCurrency:      req.FromCurrency,
+		FromAmount:        flFromAmount,
+		FromType:          req.CustomerType,
+		FromName:          req.CustomerName,
+		FromGender:        req.CustomerGender,
+		FromBirthdate:     req.CustomerBirthdate,
+		FromCitizenship:   req.CustomerCitizenship,
+		FromIdentityType:  req.CustomerIdentityType,
+		FromIdentityNo:    req.CustomerIdentityNo,
+		FromOccupation:    req.CustomerOccupation,
+		FromCountry:       req.CustomerCountry,
+		FromRegion:        req.CustomerRegion,
+		FromCity:          req.CustomerCity,
+		FromAddress:       req.CustomerAddress,
+		FromEmail:         req.CustomerEmail,
+		FromPhoneCode:     req.CustomerPhoneCode,
+		FromPhoneNo:       req.CustomerPhoneNo,
+		FromNotes:         req.CustomerNotes,
+		ToContact:         contact.Id,
+		ToCurrency:        req.ToCurrency,
+		ToAmount:          flToAmount,
+		ToType:            req.BeneficiaryType,
+		ToName:            req.BeneficiaryName,
+		ToGender:          req.BeneficiaryGender,
+		ToBirthdate:       req.BeneficiaryBirthdate,
+		ToCitizenship:     req.BeneficiaryCitizenship,
+		ToIdentityType:    req.BeneficiaryIdentityType,
+		ToIdentityNo:      req.BeneficiaryIdentityNo,
+		ToOccupation:      req.BeneficiaryOccupation,
+		ToCountry:         req.BeneficiaryCountry,
+		ToRegion:          req.BeneficiaryRegion,
+		ToCity:            req.BeneficiaryCity,
+		ToAddress:         req.BeneficiaryAddress,
+		ToEmail:           req.BeneficiaryEmail,
+		ToPhoneCode:       req.BeneficiaryPhoneCode,
+		ToPhoneNo:         req.BeneficiaryPhoneNo,
+		ToNotes:           req.BeneficiaryNotes,
+		ToRelationship:    req.BeneficiaryRelationship,
+		ToAccount:         account.Id,
+		ToBankName:        req.BankName,
+		ToBankAccountNo:   req.BankAccountNo,
+		ToBankAccountName: req.BankAccountName,
+		ToBankCountry:     req.BankCountry,
+		ToBankCode:        req.BankCode,
+		ToBankSwift:       req.BankSwiftCode,
+		ToBankAddress:     req.BankAddress,
+		ToBankEmail:       req.BankEmail,
+		ToBankPhoneCode:   req.BankPhoneCode,
+		ToBankPhoneNo:     req.BankPhoneNo,
+		ToBankWebsite:     req.BankWebsite,
+		ToBankNotes:       req.BankNotes,
+		RateCurrency:      req.FromCurrency,
+		Rate:              flRate,
+		FeeCurrency:       req.FromCurrency,
+		FeeAmountPercent:  flFeePercent,
+		FeeAmountFixed:    flFeeFixed,
+		FeeTotal:          totalFee,
+		TransferType:      req.TransferType,
+		TransferRef:       req.TransferReference,
+		TransferOn:        nil,
+		TransferDate:      req.TransferDate,
+		FundSource:        req.FundSource,
+		Purpose:           req.Purpose,
+		Notes:             req.Notes,
+		Status:            basslink.DisbursementStatusNew,
+		IsSettled:         false,
+		Created:           now,
+		Updated:           nil,
+	}
+
+	var files []basslink.DisbursementAttachment
+
+	if req.Files != nil && len(*req.Files) > 0 {
+		for _, file := range *req.Files {
+			if len(file) == 0 {
+				continue
+			}
+			if newFileId, e := uuid.NewV7(); e == nil {
+				files = append(files, basslink.DisbursementAttachment{
+					Id:             newFileId.String(),
+					DisbursementId: newDisbursement.Id,
+					Attachment:     file,
+					SubmitBy:       "agent",
+					SubmitOwner:    agent.Id,
+					SubmitTime:     now,
+				})
+			}
+		}
 	}
 
 	if err = s.App.DB.Connection.Transaction(func(tx *gorm.DB) error {
@@ -357,22 +441,16 @@ func (s *Service) createDisbursement(agent *basslink.Agent, req *CreateDisbursem
 			return err
 		}
 
+		if len(files) > 0 {
+			if err = tx.CreateInBatches(&files, len(files)).Error; err != nil {
+				return err
+			}
+		}
+
 		return nil
 	}); err != nil {
 		return err
 	}
 
 	return nil
-}
-
-func (s *Service) updateDisbursement(agent *basslink.Agent) {
-
-}
-
-func (s *Service) submitDisbursement(agent *basslink.Agent) {
-
-}
-
-func (s *Service) cancelDisbursement(agent *basslink.Agent) {
-
 }

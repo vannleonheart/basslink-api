@@ -64,3 +64,10 @@ type UpdateAgentRequest struct {
 	Email     *string `json:"email,omitempty" validate:"omitempty,email,max=100"`
 	Website   *string `json:"website,omitempty" validate:"omitempty,url"`
 }
+
+type GetDisbursementFilter struct {
+	Status *string `json:"status,omitempty" query:"status"`
+	Search *string `json:"search,omitempty" query:"search"`
+	Start  *string `json:"start,omitempty" query:"start"`
+	End    *string `json:"end,omitempty" query:"end"`
+}
