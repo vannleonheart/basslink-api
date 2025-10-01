@@ -9,7 +9,7 @@ import (
 func (s *Service) getDisbursements(req *GetDisbursementFilter) (*[]basslink.Disbursement, error) {
 	var disbursements []basslink.Disbursement
 
-	db := s.App.DB.Connection.Preload("SourceCurrency").Preload("TargetCurrency")
+	db := s.App.DB.Connection.Preload("SourceCurrency").Preload("TargetCurrency").Preload("Attachments")
 
 	if req != nil {
 		if req.Status != nil && *req.Status != "" && strings.ToLower(*req.Status) != "all" {

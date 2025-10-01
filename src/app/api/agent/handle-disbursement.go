@@ -3,6 +3,7 @@ package agent
 import (
 	"CRM/src/lib/basslink"
 	"errors"
+	"fmt"
 	"math"
 	"strings"
 	"time"
@@ -14,7 +15,7 @@ import (
 func (s *Service) getDisbursements(agent *basslink.Agent, req *GetDisbursementFilter) (*[]basslink.Disbursement, error) {
 	var disbursements []basslink.Disbursement
 
-	db := s.App.DB.Connection.Preload("SourceCurrency").Preload("TargetCurrency")
+	db := s.App.DB.Connection.Preload("SourceCurrency").Preload("TargetCurrency").Preload("Attachments")
 
 	if req != nil {
 		if req.Status != nil && *req.Status != "" && strings.ToLower(*req.Status) != "all" {
@@ -312,6 +313,8 @@ func (s *Service) createDisbursement(agent *basslink.Agent, req *CreateDisbursem
 		return errors.New("received amount is greater than expected amount")
 	}
 
+	createdBy := fmt.Sprintf("%s:%s:%s", "agent", agent.Id, agent.Name)
+
 	newDisbursement := basslink.Disbursement{
 		Id:                disbursementId.String(),
 		AgentId:           agent.Id,
@@ -382,6 +385,7 @@ func (s *Service) createDisbursement(agent *basslink.Agent, req *CreateDisbursem
 		Notes:             req.Notes,
 		Status:            basslink.DisbursementStatusNew,
 		IsSettled:         false,
+		CreatedBy:         &createdBy,
 		Created:           now,
 		Updated:           nil,
 	}
