@@ -289,3 +289,10 @@ type CreateDisbursementRequest struct {
 	Notes                   *string     `json:"notes,omitempty" validate:"omitempty"`
 	Files                   *[]string   `json:"files,omitempty" validate:"omitempty"`
 }
+
+type GetDisbursementFilter struct {
+	Status *string `json:"status,omitempty" query:"status"`
+	Search *string `json:"search,omitempty" query:"search"`
+	Start  *string `json:"start,omitempty" query:"start"`
+	End    *string `json:"end,omitempty" query:"end"`
+}

@@ -2,16 +2,41 @@ package agent
 
 import (
 	"CRM/src/lib/basslink"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
-func (s *Service) getDisbursements(agent *basslink.Agent) (*[]basslink.Disbursement, error) {
+func (s *Service) getDisbursements(agent *basslink.Agent, req *GetDisbursementFilter) (*[]basslink.Disbursement, error) {
 	var disbursements []basslink.Disbursement
 
-	if err := s.App.DB.Connection.Preload("User").Preload("Contact").Preload("TargetAccount").Preload("TargetCurrency").Where("agent_id = ?", agent.Id).Find(&disbursements).Error; err != nil {
+	db := s.App.DB.Connection.Preload("User").Preload("Contact").Preload("TargetAccount").Preload("TargetCurrency")
+
+	if req != nil {
+		if req.Status != nil && *req.Status != "" && strings.ToLower(*req.Status) != "all" {
+			db = db.Where("status = ?", *req.Status)
+		}
+
+		if req.Search != nil && *req.Search != "" {
+			db = db.Where("id LIKE ?", "%"+*req.Search+"%")
+		}
+
+		if req.Start != nil {
+			if startTimestamp, err := time.Parse("2006-01-02", *req.Start); err == nil {
+				db = db.Where("created >= ?", startTimestamp.Unix())
+			}
+		}
+
+		if req.End != nil {
+			if endTimestamp, err := time.Parse("2006-01-02", *req.End); err == nil {
+				db = db.Where("created <= ?", endTimestamp.Unix())
+			}
+		}
+	}
+
+	if err := db.Where("agent_id = ?", agent.Id).Find(&disbursements).Error; err != nil {
 		return nil, err
 	}
 

@@ -440,8 +440,14 @@ func (s *Service) handleDeleteContactAccount(c *fiber.Ctx) error {
 }
 
 func (s *Service) handleGetDisbursements(c *fiber.Ctx) error {
+	var req GetDisbursementFilter
+
+	if err := c.QueryParser(&req); err != nil {
+		return err
+	}
+
 	agentUser := c.Locals("agent").(*basslink.AgentUser)
-	result, err := s.getDisbursements(agentUser.Agent)
+	result, err := s.getDisbursements(agentUser.Agent, &req)
 	if err != nil {
 		return err
 	}
