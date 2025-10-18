@@ -1,0 +1,395 @@
+package agent
+
+import (
+	"CRM/src/lib/basslink"
+	"errors"
+	"fmt"
+	"math"
+	"strings"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/vannleonheart/goutil"
+	"gorm.io/gorm"
+)
+
+func (s *Service) generateTransactionId(transactionType string) (string, error) {
+	prefix := "TRX"
+
+	switch transactionType {
+	case "domestic":
+		prefix = "DOM"
+	case "international":
+		prefix = "INT"
+	}
+
+	randomizer := goutil.NewRandomString(goutil.AlphaUNumCharset)
+	sufix := randomizer.GenerateRange(2, 4)
+	transactionId := fmt.Sprintf("%s-%s-%s", prefix, time.Now().Format("20060102"), sufix)
+
+	var remittances []basslink.Remittance
+
+	if err := s.App.DB.Connection.Where("id = ?", transactionId).Limit(1).Find(&remittances).Error; err != nil {
+		return "", err
+	}
+
+	if len(remittances) > 0 {
+		return s.generateTransactionId(transactionType)
+	}
+
+	return transactionId, nil
+}
+
+func (s *Service) getRemittances(agent *basslink.Agent, req *GetRemittanceFilter) (*[]basslink.Remittance, error) {
+	var remittances []basslink.Remittance
+
+	db := s.App.DB.Connection.Preload("SourceCurrency").Preload("TargetCurrency").Preload("Attachments")
+
+	if req != nil {
+		if req.Type != nil && *req.Type != "" && strings.ToLower(*req.Type) != "all" {
+			db = db.Where("transfer_type = ?", *req.Type)
+		}
+
+		if req.Status != nil && *req.Status != "" && strings.ToLower(*req.Status) != "all" {
+			db = db.Where("status = ?", *req.Status)
+		}
+
+		if req.Search != nil && *req.Search != "" {
+			db = db.Where("id LIKE ?", "%"+*req.Search+"%")
+		}
+
+		if req.Start != nil {
+			if startTimestamp, err := time.Parse("2006-01-02", *req.Start); err == nil {
+				db = db.Where("created >= ?", startTimestamp.Unix())
+			}
+		}
+
+		if req.End != nil {
+			if endTimestamp, err := time.Parse("2006-01-02", *req.End); err == nil {
+				db = db.Where("created <= ?", endTimestamp.Unix())
+			}
+		}
+
+		if req.FromCurrency != nil && *req.FromCurrency != "" {
+			db = db.Where("from_currency = ?", *req.FromCurrency)
+		}
+
+		if req.ToCurrency != nil && *req.ToCurrency != "" {
+			db = db.Where("to_currency = ?", *req.ToCurrency)
+		}
+	}
+
+	if err := db.Where("agent_id = ?", agent.Id).Find(&remittances).Error; err != nil {
+		return nil, err
+	}
+
+	return &remittances, nil
+}
+
+func (s *Service) getRemittance(agent *basslink.Agent, remittanceId string) (*basslink.Remittance, error) {
+	var remittance basslink.Remittance
+
+	if err := s.App.DB.Connection.Preload("SourceCurrency").Preload("TargetCurrency").Preload("Attachments").Where("id = ? AND agent_id = ?", remittanceId, agent.Id).First(&remittance).Error; err != nil {
+		return nil, err
+	}
+
+	return &remittance, nil
+}
+
+func (s *Service) createRemittance(agent *basslink.Agent, req *CreateRemittanceRequest) error {
+	now := time.Now().Unix()
+
+	remittanceId, err := s.generateTransactionId(req.TransferType)
+	if err != nil {
+		return err
+	}
+
+	flFromAmount, err := req.FromAmount.Float64()
+	if err != nil {
+		return err
+	}
+
+	flToAmount, err := req.ToAmount.Float64()
+	if err != nil {
+		return err
+	}
+
+	flRate, err := req.Rate.Float64()
+	if err != nil {
+		return err
+	}
+
+	flFeePercent, err := req.FeePercent.Float64()
+	if err != nil {
+		return err
+	}
+
+	flFeeFixed, err := req.FeeFixed.Float64()
+	if err != nil {
+		return err
+	}
+
+	var sender *basslink.Sender
+	var recipient *basslink.Recipient
+	var updateSenderData, updateRecipientData *map[string]interface{}
+
+	if req.SenderId != nil {
+		var existingSender basslink.Sender
+
+		if err = s.App.DB.Connection.Where("id = ?", *req.SenderId).First(&existingSender).Error; err != nil {
+			return err
+		}
+
+		sender = &existingSender
+		updateSenderData = &map[string]interface{}{
+			"sender_type":         req.SenderType,
+			"name":                req.SenderName,
+			"gender":              req.SenderGender,
+			"birthdate":           req.SenderBirthdate,
+			"citizenship":         req.SenderCitizenship,
+			"identity_type":       req.SenderIdentityType,
+			"identity_no":         req.SenderIdentityNo,
+			"registered_country":  req.SenderRegisteredCountry,
+			"registered_region":   req.SenderRegisteredRegion,
+			"registered_city":     req.SenderRegisteredCity,
+			"registered_address":  req.SenderRegisteredAddress,
+			"registered_zip_code": req.SenderRegisteredZipCode,
+			"country":             req.SenderCountry,
+			"region":              req.SenderRegion,
+			"city":                req.SenderCity,
+			"address":             req.SenderAddress,
+			"zip_code":            req.SenderAddress,
+			"contact":             req.SenderContact,
+			"occupation":          req.SenderOccupation,
+			"pep_status":          req.SenderPepStatus,
+			"notes":               req.SenderNotes,
+			"updated":             now,
+			"updated_by":          agent.Id,
+		}
+	} else {
+		newUserId, e := uuid.NewV7()
+		if e != nil {
+			return e
+		}
+
+		sender = &basslink.Sender{
+			Id:                newUserId.String(),
+			SenderType:        req.SenderType,
+			Name:              req.SenderName,
+			Gender:            req.SenderGender,
+			Birthdate:         req.SenderBirthdate,
+			Citizenship:       req.SenderCitizenship,
+			IdentityType:      req.SenderIdentityType,
+			IdentityNo:        req.SenderIdentityNo,
+			RegisteredCountry: req.SenderRegisteredCountry,
+			RegisteredRegion:  req.SenderRegisteredRegion,
+			RegisteredCity:    req.SenderRegisteredCity,
+			RegisteredAddress: req.SenderRegisteredAddress,
+			RegisteredZipCode: req.SenderRegisteredZipCode,
+			Country:           req.SenderCountry,
+			Region:            req.SenderRegion,
+			City:              req.SenderCity,
+			Address:           req.SenderAddress,
+			ZipCode:           req.SenderZipCode,
+			Contact:           req.SenderContact,
+			Occupation:        req.SenderOccupation,
+			PepStatus:         req.SenderPepStatus,
+			Notes:             req.SenderNotes,
+			Created:           now,
+			CreatedBy:         agent.Id,
+		}
+	}
+
+	if req.RecipientId != nil {
+		var existingRecipient basslink.Recipient
+
+		if err = s.App.DB.Connection.Where("id = ?", *req.RecipientId).First(&existingRecipient).Error; err != nil {
+			return err
+		}
+
+		recipient = &existingRecipient
+		updateRecipientData = &map[string]interface{}{
+			"recipient_type":     req.RecipientType,
+			"relationship":       req.RecipientRelationship,
+			"name":               req.RecipientName,
+			"country":            req.RecipientCountry,
+			"region":             req.RecipientRegion,
+			"city":               req.RecipientCity,
+			"address":            req.RecipientAddress,
+			"zip_code":           req.RecipientZipCode,
+			"contact":            req.RecipientContact,
+			"pep_status":         req.RecipientPepStatus,
+			"bank_name":          req.RecipientBankName,
+			"bank_code":          req.RecipientBankCode,
+			"bank_account_no":    req.RecipientBankAccountNo,
+			"bank_account_owner": req.RecipientBankAccountOwner,
+			"notes":              req.RecipientNotes,
+			"updated":            now,
+		}
+	} else {
+		newrecipientId, e := uuid.NewV7()
+		if e != nil {
+			return e
+		}
+
+		recipient = &basslink.Recipient{
+			Id:               newrecipientId.String(),
+			SenderId:         sender.Id,
+			RecipientType:    req.RecipientType,
+			Relationship:     req.RecipientRelationship,
+			Name:             req.RecipientName,
+			Country:          req.RecipientCountry,
+			Region:           req.RecipientRegion,
+			City:             req.RecipientCity,
+			Address:          req.RecipientAddress,
+			ZipCode:          req.RecipientZipCode,
+			Contact:          req.RecipientContact,
+			PepStatus:        req.RecipientPepStatus,
+			BankName:         req.RecipientBankName,
+			BankCode:         req.RecipientBankCode,
+			BankAccountNo:    req.RecipientBankAccountNo,
+			BankAccountOwner: req.RecipientBankAccountOwner,
+			Notes:            req.RecipientNotes,
+			Created:          now,
+		}
+	}
+
+	totalFee := flFeeFixed
+	if flFeePercent > 0 {
+		totalFee += math.Ceil((flFeePercent * flFromAmount) / 100)
+	}
+
+	if flToAmount > ((flFromAmount - totalFee) * flRate) {
+		return errors.New("received amount is greater than expected amount")
+	}
+
+	createdBy := fmt.Sprintf("%s:%s:%s", "agent", agent.Id, agent.Name)
+
+	newRemittance := basslink.Remittance{
+		Id:                    remittanceId,
+		AgentId:               agent.Id,
+		SenderId:              sender.Id,
+		FromCurrency:          req.FromCurrency,
+		FromAmount:            flFromAmount,
+		FromSenderType:        req.SenderType,
+		FromName:              req.SenderName,
+		FromGender:            req.SenderGender,
+		FromBirthdate:         req.SenderBirthdate,
+		FromCitizenship:       req.SenderCitizenship,
+		FromIdentityType:      req.SenderIdentityType,
+		FromIdentityNo:        req.SenderIdentityNo,
+		FromRegisteredCountry: req.SenderRegisteredCountry,
+		FromRegisteredRegion:  req.SenderRegisteredRegion,
+		FromRegisteredCity:    req.SenderRegisteredCity,
+		FromRegisteredAddress: req.SenderRegisteredAddress,
+		FromRegisteredZipCode: req.SenderRegisteredZipCode,
+		FromCountry:           req.SenderCountry,
+		FromRegion:            req.SenderRegion,
+		FromCity:              req.SenderCity,
+		FromAddress:           req.SenderAddress,
+		FromZipCode:           req.SenderZipCode,
+		FromContact:           req.SenderContact,
+		FromOccupation:        req.SenderOccupation,
+		FromPepStatus:         req.SenderPepStatus,
+		FromNotes:             req.SenderNotes,
+		RecipientId:           recipient.Id,
+		ToCurrency:            req.ToCurrency,
+		ToAmount:              flToAmount,
+		ToRecipientType:       req.RecipientType,
+		ToRelationship:        req.RecipientRelationship,
+		ToName:                req.RecipientName,
+		ToCountry:             req.RecipientCountry,
+		ToRegion:              req.RecipientRegion,
+		ToCity:                req.RecipientCity,
+		ToAddress:             req.RecipientAddress,
+		ToZipCode:             req.RecipientZipCode,
+		ToContact:             req.RecipientContact,
+		ToPepStatus:           req.RecipientPepStatus,
+		ToBankName:            req.RecipientBankName,
+		ToBankCode:            req.RecipientBankCode,
+		ToBankAccountNo:       req.RecipientBankAccountNo,
+		ToBankAccountOwner:    req.RecipientBankAccountOwner,
+		ToNotes:               req.Notes,
+		RateCurrency:          req.FromCurrency,
+		Rate:                  flRate,
+		FeeCurrency:           req.FromCurrency,
+		FeeAmountPercent:      flFeePercent,
+		FeeAmountFixed:        flFeeFixed,
+		FeeTotal:              totalFee,
+		PaymentMethod:         req.PaymentMethod,
+		TransferType:          req.TransferType,
+		TransferRef:           req.TransferReference,
+		FundSource:            req.FundSource,
+		Purpose:               req.Purpose,
+		Notes:                 req.Notes,
+		Status:                basslink.RemittanceStatusNew,
+		IsSettled:             false,
+		CreatedBy:             &createdBy,
+		ApprovedBy:            nil,
+		ReleasedBy:            nil,
+		ApprovedAt:            nil,
+		ReleasedAt:            nil,
+		Created:               now,
+		Updated:               nil,
+		SourceCurrency:        nil,
+		TargetCurrency:        nil,
+		Attachments:           nil,
+	}
+
+	var files []basslink.RemittanceAttachment
+
+	if req.Files != nil && len(*req.Files) > 0 {
+		for _, file := range *req.Files {
+			if len(file) == 0 {
+				continue
+			}
+			if newFileId, e := uuid.NewV7(); e == nil {
+				files = append(files, basslink.RemittanceAttachment{
+					Id:           newFileId.String(),
+					RemittanceId: newRemittance.Id,
+					Attachment:   file,
+					SubmitBy:     agent.Id,
+					SubmitTime:   now,
+				})
+			}
+		}
+	}
+
+	if err = s.App.DB.Connection.Transaction(func(tx *gorm.DB) error {
+		if req.SenderId == nil {
+			if err = tx.Create(sender).Error; err != nil {
+				return err
+			}
+		} else {
+			if err = tx.Model(basslink.Sender{}).Where("id = ?", sender.Id).Updates(*updateSenderData).Error; err != nil {
+				return err
+			}
+		}
+
+		if req.RecipientId == nil {
+			if err = tx.Create(recipient).Error; err != nil {
+				return err
+			}
+		} else {
+			if err = tx.Model(basslink.Recipient{}).Where("id = ?", recipient.Id).Updates(*updateRecipientData).Error; err != nil {
+				return err
+			}
+		}
+
+		if err = tx.Create(&newRemittance).Error; err != nil {
+			return err
+		}
+
+		if len(files) > 0 {
+			if err = tx.CreateInBatches(&files, len(files)).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	return nil
+}

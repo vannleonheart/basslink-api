@@ -25,17 +25,15 @@ func (s *Service) InitRouter() {
 	agentEndpoint.Put("/:id", s.handleUpdateAgent)
 	agentEndpoint.Patch("/:id/status", s.handleToggleAgentEnable)
 
-	userEndpoint := mainEndpoint.Group("/users", s.shouldBeUser([]string{}))
+	userEndpoint := mainEndpoint.Group("/senders", s.shouldBeUser([]string{}))
 	userEndpoint.Get("/", s.handleGetUsers)
 	userEndpoint.Get("/:id", s.handleGetUser)
 
-	contactEndpoint := mainEndpoint.Group("/contacts", s.shouldBeUser([]string{}))
-	contactEndpoint.Get("/", s.handleGetContacts)
-	contactEndpoint.Get("/:id", s.handleGetContact)
+	recipientEndpoint := mainEndpoint.Group("/recipients", s.shouldBeUser([]string{}))
+	recipientEndpoint.Get("/", s.handleGetRecipients)
+	recipientEndpoint.Get("/:id", s.handleGetRecipient)
 
-	contactEndpoint.Get("/:contactId/accounts", s.handleGetContactAccounts)
-
-	disbursementEndpoint := mainEndpoint.Group("/disbursements", s.shouldBeUser([]string{}))
-	disbursementEndpoint.Get("/", s.handleGetDisbursements)
-	disbursementEndpoint.Get("/:id", s.handleGetDisbursement)
+	remittanceEndpoint := mainEndpoint.Group("/remittances", s.shouldBeUser([]string{}))
+	remittanceEndpoint.Get("/", s.handleGetRemittances)
+	remittanceEndpoint.Get("/:id", s.handleGetRemittance)
 }

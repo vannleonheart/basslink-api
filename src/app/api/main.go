@@ -9,10 +9,8 @@ import (
 )
 
 const (
-	appName        = "api"
-	appVersion     = "1.0.0"
-	timeZone       = "Asia/Jakarta"
-	dateTimeFormat = "2006-01-02 15:04:05"
+	appName  = "api"
+	timeZone = "Asia/Jakarta"
 )
 
 var (

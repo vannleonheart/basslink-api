@@ -64,7 +64,7 @@ type UpdateAgentRequest struct {
 	Website   *string `json:"website,omitempty" validate:"omitempty,url"`
 }
 
-type GetDisbursementFilter struct {
+type GetRemittanceFilter struct {
 	Status *string `json:"status,omitempty" query:"status"`
 	Search *string `json:"search,omitempty" query:"search"`
 	Start  *string `json:"start,omitempty" query:"start"`

@@ -7,32 +7,32 @@ const (
 	TableAgentDocuments           = "agent_documents"
 	TableAgentUsers               = "agent_users"
 	TableAgentUserCredentials     = "agent_user_credentials"
-	TableUsers                    = "users"
-	TableUserCredentials          = "user_credentials"
-	TableUserDocuments            = "user_documents"
-	TableContacts                 = "contacts"
-	TableContactDocuments         = "contact_documents"
-	TableContactAccounts          = "contact_accounts"
-	TableDeposits                 = "deposits"
-	TableDisbursements            = "disbursements"
+	TableSenders                  = "senders"
+	TableSenderDocuments          = "sender_documents"
+	TableRecipients               = "recipients"
+	TableRecipientDocuments       = "recipient_documents"
+	TableRemittances              = "remittances"
+	TableRemittanceAttachments    = "remittance_attachments"
 	TableCurrencies               = "currencies"
-	TableDisbursementAttachments  = "disbursement_attachments"
 
 	AdministratorRoleRoot  = "root"
 	AdministratorRoleSuper = "super"
 	AdministratorRoleAdmin = "admin"
 
 	AgentRoleOwner = "owner"
+	AgentRoleAdmin = "admin"
+	AgentRoleUser  = "user"
+	AgentRoleGuest = "guest"
 
-	DisbursementStatusDraft     = "draft"
-	DisbursementStatusNew       = "new"
-	DisbursementStatusApproved  = "approved"
-	DisbursementStatusRejected  = "rejected"
-	DisbursementStatusPending   = "pending"
-	DisbursementStatusProcessed = "processed"
-	DisbursementStatusCompleted = "paid"
-	DisbursementStatusCancelled = "cancelled"
-	DisbursementStatusFailed    = "failed"
+	RemittanceStatusDraft     = "draft"
+	RemittanceStatusNew       = "new"
+	RemittanceStatusApproved  = "approved"
+	RemittanceStatusRejected  = "rejected"
+	RemittanceStatusPending   = "pending"
+	RemittanceStatusProcessed = "processed"
+	RemittanceStatusCompleted = "paid"
+	RemittanceStatusCancelled = "cancelled"
+	RemittanceStatusFailed    = "failed"
 )
 
 type Administrator struct {
@@ -117,49 +117,41 @@ type AgentUserCredential struct {
 
 func (t AgentUserCredential) TableName() string { return TableAgentUserCredentials }
 
-type User struct {
-	Id            string          `json:"id"`
-	AgentId       string          `json:"agent_id"`
-	Username      *string         `json:"username"`
-	UserType      string          `json:"user_type"`
-	Name          string          `json:"name"`
-	Gender        *string         `json:"gender,omitempty"`
-	Birthdate     *string         `json:"birthdate,omitempty"`
-	Citizenship   string          `json:"citizenship"`
-	IdentityType  string          `json:"identity_type"`
-	IdentityNo    string          `json:"identity_no"`
-	Country       *string         `json:"country,omitempty"`
-	Region        *string         `json:"region,omitempty"`
-	City          *string         `json:"city,omitempty"`
-	Address       *string         `json:"address,omitempty"`
-	Email         *string         `json:"email,omitempty"`
-	PhoneCode     *string         `json:"phone_code,omitempty"`
-	PhoneNo       *string         `json:"phone_no,omitempty"`
-	Occupation    *string         `json:"occupation,omitempty"`
-	Notes         *string         `json:"notes,omitempty"`
-	IsVerified    bool            `json:"is_verified"`
-	EmailVerified bool            `json:"email_verified"`
-	PhoneVerified bool            `json:"phone_verified"`
-	IsEnable      bool            `json:"is_enabled"`
-	Created       int64           `json:"created,omitempty"`
-	Updated       *int64          `json:"updated,omitempty"`
-	Documents     *[]UserDocument `json:"documents,omitempty" gorm:"foreignKey:UserId;reference:Id"`
+type Sender struct {
+	Id                string            `json:"id"`
+	SenderType        string            `json:"sender_type"`
+	Name              string            `json:"name"`
+	Gender            string            `json:"gender"`
+	Birthdate         string            `json:"birthdate"`
+	Citizenship       string            `json:"citizenship"`
+	IdentityType      string            `json:"identity_type"`
+	IdentityNo        string            `json:"identity_no"`
+	RegisteredCountry string            `json:"registered_country"`
+	RegisteredRegion  string            `json:"registered_region"`
+	RegisteredCity    string            `json:"registered_city"`
+	RegisteredAddress string            `json:"registered_address"`
+	RegisteredZipCode string            `json:"registered_zip_code"`
+	Country           string            `json:"country"`
+	Region            string            `json:"region"`
+	City              string            `json:"city"`
+	Address           string            `json:"address"`
+	ZipCode           string            `json:"zip_code"`
+	Contact           string            `json:"contact"`
+	Occupation        string            `json:"occupation"`
+	PepStatus         *string           `json:"pep_status,omitempty"`
+	Notes             *string           `json:"notes,omitempty"`
+	Created           int64             `json:"created"`
+	CreatedBy         string            `json:"created_by"`
+	Updated           *int64            `json:"updated,omitempty"`
+	UpdatedBy         *string           `json:"updated_by,omitempty"`
+	Documents         *[]SenderDocument `json:"documents,omitempty" gorm:"foreignKey:SenderId;reference:Id"`
 }
 
-func (t User) TableName() string { return TableUsers }
+func (t Sender) TableName() string { return TableSenders }
 
-type UserCredential struct {
-	UserId         string `json:"user_id"`
-	CredentialType string `json:"credential_type"`
-	CredentialData string `json:"credential_data"`
-	Updated        int64  `json:"updated"`
-}
-
-func (t UserCredential) TableName() string { return TableUserCredentials }
-
-type UserDocument struct {
+type SenderDocument struct {
 	Id           string  `json:"id"`
-	UserId       string  `json:"user_id"`
+	SenderId     string  `json:"sender_id"`
 	DocumentType string  `json:"document_type"`
 	DocumentData string  `json:"document_data"`
 	Notes        *string `json:"notes,omitempty"`
@@ -168,39 +160,36 @@ type UserDocument struct {
 	Updated      *int64  `json:"updated,omitempty"`
 }
 
-func (t UserDocument) TableName() string { return TableUserDocuments }
+func (t SenderDocument) TableName() string { return TableSenderDocuments }
 
-type Contact struct {
-	Id           string            `json:"id"`
-	AgentId      string            `json:"agent_id"`
-	ContactType  string            `json:"contact_type"`
-	Name         string            `json:"name"`
-	Gender       *string           `json:"gender,omitempty"`
-	Birthdate    *string           `json:"birthdate,omitempty"`
-	Citizenship  string            `json:"citizenship"`
-	IdentityType string            `json:"identity_type"`
-	IdentityNo   string            `json:"identity_no"`
-	Country      *string           `json:"country,omitempty"`
-	Region       *string           `json:"region,omitempty"`
-	City         *string           `json:"city,omitempty"`
-	Address      *string           `json:"address,omitempty"`
-	Email        *string           `json:"email,omitempty"`
-	PhoneCode    *string           `json:"phone_code,omitempty"`
-	PhoneNo      *string           `json:"phone_no,omitempty"`
-	Occupation   *string           `json:"occupation,omitempty"`
-	Notes        *string           `json:"notes,omitempty"`
-	IsVerified   bool              `json:"is_verified"`
-	Created      int64             `json:"created"`
-	Updated      *int64            `json:"updated,omitempty"`
-	Documents    []ContactDocument `json:"documents,omitempty" gorm:"foreignKey:ContactId;reference:Id"`
-	Accounts     []ContactAccount  `json:"accounts,omitempty" gorm:"foreignKey:ContactId;reference:Id"`
+type Recipient struct {
+	Id               string              `json:"id"`
+	SenderId         string              `json:"sender_id"`
+	RecipientType    string              `json:"recipient_type"`
+	Relationship     string              `json:"relationship"`
+	Name             string              `json:"name"`
+	Country          string              `json:"country"`
+	Region           string              `json:"region,"`
+	City             string              `json:"city"`
+	Address          string              `json:"address"`
+	ZipCode          string              `json:"zip_code"`
+	Contact          string              `json:"contact"`
+	PepStatus        *string             `json:"pep_status,omitempty"`
+	BankName         string              `json:"bank_name"`
+	BankCode         string              `json:"bank_code"`
+	BankAccountNo    string              `json:"bank_account_no"`
+	BankAccountOwner string              `json:"bank_account_owner"`
+	Notes            *string             `json:"notes,omitempty"`
+	Created          int64               `json:"created"`
+	Updated          *int64              `json:"updated,omitempty"`
+	Documents        []RecipientDocument `json:"documents,omitempty" gorm:"foreignKey:RecipientId;reference:Id"`
 }
 
-func (t Contact) TableName() string { return TableContacts }
+func (t Recipient) TableName() string { return TableRecipients }
 
-type ContactDocument struct {
+type RecipientDocument struct {
 	Id           string  `json:"id"`
-	ContactId    string  `json:"contact_id"`
+	RecipientId  string  `json:"recipient_id"`
 	DocumentType string  `json:"document_type"`
 	DocumentData string  `json:"document_data"`
 	Notes        *string `json:"notes,omitempty"`
@@ -209,114 +198,90 @@ type ContactDocument struct {
 	Updated      *int64  `json:"updated,omitempty"`
 }
 
-func (t ContactDocument) TableName() string { return TableContactDocuments }
+func (t RecipientDocument) TableName() string { return TableRecipientDocuments }
 
-type ContactAccount struct {
-	Id          string  `json:"id"`
-	ContactId   string  `json:"contact_id"`
-	AccountType string  `json:"account_type"`
-	BankId      string  `json:"bank_id"`
-	BankName    string  `json:"bank_name"`
-	BankCode    *string `json:"bank_code,omitempty"`
-	BankSwift   *string `json:"bank_swift,omitempty"`
-	OwnerName   string  `json:"owner_name"`
-	No          string  `json:"no"`
-	Country     *string `json:"country,omitempty"`
-	Address     *string `json:"address,omitempty"`
-	Email       *string `json:"email,omitempty"`
-	Website     *string `json:"website,omitempty"`
-	PhoneCode   *string `json:"phone_code,omitempty"`
-	PhoneNo     *string `json:"phone_no,omitempty"`
-	Notes       *string `json:"notes,omitempty"`
-	Created     int64   `json:"created"`
-	Updated     *int64  `json:"updated,omitempty"`
+type Remittance struct {
+	Id                    string                  `json:"id"`
+	AgentId               string                  `json:"agent_id"`
+	SenderId              string                  `json:"sender_id"`
+	FromCurrency          string                  `json:"from_currency"`
+	FromAmount            float64                 `json:"from_amount"`
+	FromSenderType        string                  `json:"from_sender_type"`
+	FromName              string                  `json:"from_name"`
+	FromGender            string                  `json:"from_gender"`
+	FromBirthdate         string                  `json:"from_birthdate"`
+	FromCitizenship       string                  `json:"from_citizenship"`
+	FromIdentityType      string                  `json:"from_identity_type"`
+	FromIdentityNo        string                  `json:"from_identity_no"`
+	FromRegisteredCountry string                  `json:"from_registered_country"`
+	FromRegisteredRegion  string                  `json:"from_registered_region"`
+	FromRegisteredCity    string                  `json:"from_registered_city"`
+	FromRegisteredAddress string                  `json:"from_registered_address"`
+	FromRegisteredZipCode string                  `json:"from_registered_zip_code"`
+	FromCountry           string                  `json:"from_country"`
+	FromRegion            string                  `json:"from_region"`
+	FromCity              string                  `json:"from_city"`
+	FromAddress           string                  `json:"from_address"`
+	FromZipCode           string                  `json:"from_zip_code"`
+	FromContact           string                  `json:"from_contact"`
+	FromOccupation        string                  `json:"from_occupation"`
+	FromPepStatus         *string                 `json:"from_pep_status,omitempty"`
+	FromNotes             *string                 `json:"from_notes"`
+	RecipientId           string                  `json:"recipient_id"`
+	ToCurrency            string                  `json:"to_currency"`
+	ToAmount              float64                 `json:"to_amount"`
+	ToRecipientType       string                  `json:"to_recipient_type"`
+	ToRelationship        string                  `json:"to_relationship"`
+	ToName                string                  `json:"to_name"`
+	ToCountry             string                  `json:"to_country"`
+	ToRegion              string                  `json:"to_region"`
+	ToCity                string                  `json:"to_city"`
+	ToAddress             string                  `json:"to_address"`
+	ToZipCode             string                  `json:"to_zip_code"`
+	ToContact             string                  `json:"to_contact"`
+	ToPepStatus           *string                 `json:"to_pep_status,omitempty"`
+	ToBankName            string                  `json:"to_bank_name"`
+	ToBankCode            string                  `json:"to_bank_code"`
+	ToBankAccountNo       string                  `json:"to_bank_account_no"`
+	ToBankAccountOwner    string                  `json:"to_bank_account_owner"`
+	ToNotes               *string                 `json:"to_notes,omitempty"`
+	RateCurrency          string                  `json:"rate_currency"`
+	Rate                  float64                 `json:"rate"`
+	FeeCurrency           string                  `json:"fee_currency"`
+	FeeAmountPercent      float64                 `json:"fee_amount_percent"`
+	FeeAmountFixed        float64                 `json:"fee_amount_fixed"`
+	FeeTotal              float64                 `json:"fee_total"`
+	PaymentMethod         string                  `json:"payment_method"`
+	TransferType          string                  `json:"transfer_type"`
+	TransferRef           *string                 `json:"transfer_ref,omitempty"`
+	FundSource            *string                 `json:"fund_source,omitempty"`
+	Purpose               *string                 `json:"purpose,omitempty"`
+	Notes                 *string                 `json:"notes,omitempty"`
+	Status                string                  `json:"status"`
+	IsSettled             bool                    `json:"is_settled"`
+	CreatedBy             *string                 `json:"created_by"`
+	ApprovedBy            *string                 `json:"approved_by"`
+	ReleasedBy            *string                 `json:"released_by"`
+	ApprovedAt            *int64                  `json:"approved_at,omitempty"`
+	ReleasedAt            *int64                  `json:"released_at,omitempty"`
+	Created               int64                   `json:"created"`
+	Updated               *int64                  `json:"updated,omitempty"`
+	SourceCurrency        *Currency               `json:"source_currency,omitempty" gorm:"foreignKey:FromCurrency;reference:Id"`
+	TargetCurrency        *Currency               `json:"target_currency,omitempty" gorm:"foreignKey:ToCurrency;reference:Id"`
+	Attachments           *[]RemittanceAttachment `json:"attachments" gorm:"foreignKey:RemittanceId;reference:Id"`
 }
 
-func (t ContactAccount) TableName() string { return TableContactAccounts }
+func (t Remittance) TableName() string { return TableRemittances }
 
-type Disbursement struct {
-	Id                string                    `json:"id"`
-	AgentId           string                    `json:"agent_id"`
-	UserId            *string                   `json:"user_id,omitempty"`
-	FromCurrency      string                    `json:"from_currency"`
-	FromAmount        float64                   `json:"from_amount"`
-	FromType          string                    `json:"from_type"`
-	FromName          string                    `json:"from_name"`
-	FromGender        *string                   `json:"from_gender,omitempty"`
-	FromBirthdate     *string                   `json:"from_birthdate,omitempty"`
-	FromCitizenship   string                    `json:"from_citizenship"`
-	FromIdentityType  string                    `json:"from_identity_type"`
-	FromIdentityNo    string                    `json:"from_identity_no"`
-	FromOccupation    *string                   `json:"from_occupation,omitempty"`
-	FromCountry       *string                   `json:"from_country,omitempty"`
-	FromRegion        *string                   `json:"from_region,omitempty"`
-	FromCity          *string                   `json:"from_city,omitempty"`
-	FromAddress       *string                   `json:"from_address,omitempty"`
-	FromEmail         *string                   `json:"from_email,omitempty"`
-	FromPhoneCode     *string                   `json:"from_phone_code,omitempty"`
-	FromPhoneNo       *string                   `json:"from_phone_no,omitempty"`
-	FromNotes         *string                   `json:"from_notes,omitempty"`
-	ToContact         string                    `json:"to_contact"`
-	ToCurrency        string                    `json:"to_currency"`
-	ToAmount          float64                   `json:"to_amount"`
-	ToType            string                    `json:"to_type"`
-	ToName            string                    `json:"to_name"`
-	ToGender          *string                   `json:"to_gender,omitempty"`
-	ToBirthdate       *string                   `json:"to_birthdate,omitempty"`
-	ToCitizenship     string                    `json:"to_citizenship"`
-	ToIdentityType    string                    `json:"to_identity_type"`
-	ToIdentityNo      string                    `json:"to_identity_no"`
-	ToOccupation      *string                   `json:"to_occupation,omitempty"`
-	ToCountry         *string                   `json:"to_country,omitempty"`
-	ToRegion          *string                   `json:"to_region,omitempty"`
-	ToCity            *string                   `json:"to_city,omitempty"`
-	ToAddress         *string                   `json:"to_address,omitempty"`
-	ToEmail           *string                   `json:"to_email,omitempty"`
-	ToPhoneCode       *string                   `json:"to_phone_code,omitempty"`
-	ToPhoneNo         *string                   `json:"to_phone_no,omitempty"`
-	ToNotes           *string                   `json:"to_notes,omitempty"`
-	ToRelationship    *string                   `json:"to_relationship,omitempty"`
-	ToAccount         string                    `json:"to_account"`
-	ToBankName        string                    `json:"to_bank_name"`
-	ToBankAccountNo   string                    `json:"to_bank_account_no"`
-	ToBankAccountName string                    `json:"to_bank_account_name"`
-	ToBankCountry     string                    `json:"to_bank_country"`
-	ToBankCode        *string                   `json:"to_bank_code,omitempty"`
-	ToBankSwift       *string                   `json:"to_bank_swift,omitempty"`
-	ToBankAddress     *string                   `json:"to_bank_address,omitempty"`
-	ToBankEmail       *string                   `json:"to_bank_email,omitempty"`
-	ToBankPhoneCode   *string                   `json:"to_bank_phone_code,omitempty"`
-	ToBankPhoneNo     *string                   `json:"to_bank_phone_no,omitempty"`
-	ToBankWebsite     *string                   `json:"to_bank_website,omitempty"`
-	ToBankNotes       *string                   `json:"to_bank_notes,omitempty"`
-	RateCurrency      string                    `json:"rate_currency"`
-	Rate              float64                   `json:"rate"`
-	FeeCurrency       string                    `json:"fee_currency"`
-	FeeAmountPercent  float64                   `json:"fee_amount_percent"`
-	FeeAmountFixed    float64                   `json:"fee_amount_fixed"`
-	FeeTotal          float64                   `json:"fee_total"`
-	TransferType      *string                   `json:"transfer_type"`
-	TransferRef       *string                   `json:"transfer_ref,omitempty"`
-	TransferOn        *string                   `json:"transfer_on,omitempty"`
-	TransferDate      *string                   `json:"transfer_date,omitempty"`
-	FundSource        *string                   `json:"fund_source,omitempty"`
-	Purpose           *string                   `json:"purpose,omitempty"`
-	Notes             *string                   `json:"notes,omitempty"`
-	Status            string                    `json:"status"`
-	IsSettled         bool                      `json:"is_settled"`
-	CreatedBy         *string                   `json:"created_by"`
-	ApprovedBy        *string                   `json:"approved_by"`
-	ReleasedBy        *string                   `json:"released_by"`
-	ApprovedAt        *int64                    `json:"approved_at,omitempty"`
-	ReleasedAt        *int64                    `json:"released_at,omitempty"`
-	Created           int64                     `json:"created"`
-	Updated           *int64                    `json:"updated,omitempty"`
-	SourceCurrency    *Currency                 `json:"source_currency,omitempty" gorm:"foreignKey:FromCurrency;reference:Id"`
-	TargetCurrency    *Currency                 `json:"target_currency,omitempty" gorm:"foreignKey:ToCurrency;reference:Id"`
-	Attachments       *[]DisbursementAttachment `json:"attachments" gorm:"foreignKey:DisbursementId;reference:Id"`
+type RemittanceAttachment struct {
+	Id           string `json:"id"`
+	RemittanceId string `json:"remittance_id"`
+	Attachment   string `json:"attachment"`
+	SubmitBy     string `json:"submit_by"`
+	SubmitTime   int64  `json:"submit_time"`
 }
 
-func (t Disbursement) TableName() string { return TableDisbursements }
+func (t RemittanceAttachment) TableName() string { return TableRemittanceAttachments }
 
 type Currency struct {
 	Id       string `json:"id"`
@@ -327,14 +292,3 @@ type Currency struct {
 }
 
 func (t Currency) TableName() string { return TableCurrencies }
-
-type DisbursementAttachment struct {
-	Id             string `json:"id"`
-	DisbursementId string `json:"disbursement_id"`
-	Attachment     string `json:"attachment"`
-	SubmitBy       string `json:"submit_by"`
-	SubmitOwner    string `json:"submit_owner"`
-	SubmitTime     int64  `json:"submit_time"`
-}
-
-func (t DisbursementAttachment) TableName() string { return TableDisbursementAttachments }

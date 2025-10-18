@@ -244,56 +244,46 @@ func (s *Service) handleToggleAgentEnable(c *fiber.Ctx) error {
 	return basslink.NewSuccessResponse(c, "AGENT_UPDATE_SUCCESS", nil)
 }
 
-func (s *Service) handleGetContacts(c *fiber.Ctx) error {
-	result, err := s.getContacts()
+func (s *Service) handleGetRecipients(c *fiber.Ctx) error {
+	result, err := s.getRecipients()
 	if err != nil {
 		return err
 	}
 
-	return basslink.NewSuccessResponse(c, "CONTACT_LIST_SUCCESS", result)
+	return basslink.NewSuccessResponse(c, "RECIPIENT_LIST_SUCCESS", result)
 }
 
-func (s *Service) handleGetContact(c *fiber.Ctx) error {
-	contactId := c.Params("id")
-	result, err := s.getContact(contactId)
+func (s *Service) handleGetRecipient(c *fiber.Ctx) error {
+	recipientId := c.Params("id")
+	result, err := s.getRecipient(recipientId)
 	if err != nil {
 		return err
 	}
 
-	return basslink.NewSuccessResponse(c, "CONTACT_GET_SUCCESS", result)
+	return basslink.NewSuccessResponse(c, "RECIPIENT_GET_SUCCESS", result)
 }
 
-func (s *Service) handleGetContactAccounts(c *fiber.Ctx) error {
-	contactId := c.Params("contactId")
-	result, err := s.getContactAccounts(contactId)
-	if err != nil {
-		return err
-	}
-
-	return basslink.NewSuccessResponse(c, "USER_LIST_SUCCESS", result)
-}
-
-func (s *Service) handleGetDisbursements(c *fiber.Ctx) error {
-	var req GetDisbursementFilter
+func (s *Service) handleGetRemittances(c *fiber.Ctx) error {
+	var req GetRemittanceFilter
 
 	if err := c.QueryParser(&req); err != nil {
 		return err
 	}
 
-	result, err := s.getDisbursements(&req)
+	result, err := s.getRemittances(&req)
 	if err != nil {
 		return err
 	}
 
-	return basslink.NewSuccessResponse(c, "DISBURSEMENT_LIST_SUCCESS", result)
+	return basslink.NewSuccessResponse(c, "REMITTANCE_LIST_SUCCESS", result)
 }
 
-func (s *Service) handleGetDisbursement(c *fiber.Ctx) error {
-	disbursementId := c.Params("id")
-	result, err := s.getDisbursement(disbursementId)
+func (s *Service) handleGetRemittance(c *fiber.Ctx) error {
+	remittanceId := c.Params("id")
+	result, err := s.getRemittance(remittanceId)
 	if err != nil {
 		return err
 	}
 
-	return basslink.NewSuccessResponse(c, "DISBURSEMENT_GET_SUCCESS", result)
+	return basslink.NewSuccessResponse(c, "REMITTANCE_GET_SUCCESS", result)
 }

@@ -70,18 +70,6 @@ func (s *Service) handleSession(c *fiber.Ctx) error {
 										}
 									}
 								}
-
-								if as == "user" {
-									if userId, ok := claims["user"]; ok {
-										var user basslink.User
-
-										if err = s.App.DB.Connection.Where("id = ?", userId).First(&user).Error; err == nil {
-											if user.IsEnable {
-												c.Locals("user", &user)
-											}
-										}
-									}
-								}
 							}
 						}
 					}

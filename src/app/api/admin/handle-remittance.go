@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-func (s *Service) getDisbursements(req *GetDisbursementFilter) (*[]basslink.Disbursement, error) {
-	var disbursements []basslink.Disbursement
+func (s *Service) getRemittances(req *GetRemittanceFilter) (*[]basslink.Remittance, error) {
+	var remittances []basslink.Remittance
 
 	db := s.App.DB.Connection.Preload("SourceCurrency").Preload("TargetCurrency").Preload("Attachments")
 
@@ -33,19 +33,19 @@ func (s *Service) getDisbursements(req *GetDisbursementFilter) (*[]basslink.Disb
 		}
 	}
 
-	if err := db.Find(&disbursements).Error; err != nil {
+	if err := db.Find(&remittances).Error; err != nil {
 		return nil, err
 	}
 
-	return &disbursements, nil
+	return &remittances, nil
 }
 
-func (s *Service) getDisbursement(disbursementId string) (*basslink.Disbursement, error) {
-	var disbursement basslink.Disbursement
+func (s *Service) getRemittance(remittanceId string) (*basslink.Remittance, error) {
+	var remittance basslink.Remittance
 
-	if err := s.App.DB.Connection.First(&disbursement, disbursementId).Error; err != nil {
+	if err := s.App.DB.Connection.Where("id = ?", remittanceId).First(&remittance).Error; err != nil {
 		return nil, err
 	}
 
-	return &disbursement, nil
+	return &remittance, nil
 }
