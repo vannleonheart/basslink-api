@@ -2,6 +2,8 @@ package common
 
 import (
 	"CRM/src/lib/basslink"
+	"encoding/json"
+	"errors"
 
 	"github.com/gofiber/fiber/v2"
 )
@@ -32,6 +34,22 @@ func (s *Service) FileUploadHandler(c *fiber.Ctx) error {
 	return basslink.NewSuccessResponse(c, "FILE_UPLOAD_SUCCESS", result)
 }
 
+func (s *Service) PublicFileUploadHandler(c *fiber.Ctx) error {
+	form, err := c.MultipartForm()
+	if err != nil {
+		return err
+	}
+
+	path := "uploads/general"
+
+	result, apErr := s.handleUploadFile(path, form)
+	if apErr != nil {
+		return apErr
+	}
+
+	return basslink.NewSuccessResponse(c, "FILE_UPLOAD_SUCCESS", result)
+}
+
 func (s *Service) GetCurrenciesHandler(c *fiber.Ctx) error {
 	result, apErr := s.handleGetCurrencies()
 	if apErr != nil {
@@ -39,4 +57,116 @@ func (s *Service) GetCurrenciesHandler(c *fiber.Ctx) error {
 	}
 
 	return basslink.NewSuccessResponse(c, "CURRENCIES_LIST_SUCCESS", result)
+}
+
+func (s *Service) GetRateHandler(c *fiber.Ctx) error {
+	var req GetRateRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		return err
+	}
+
+	if err := s.App.ValidateRequest(&req); err != nil {
+		var errorData []map[string]interface{}
+
+		_ = json.Unmarshal([]byte(err.Error()), &errorData)
+
+		return basslink.NewAppError("ERROR_VALIDATION", basslink.ErrBadRequest, basslink.ErrBadRequestValidation, "", errorData)
+	}
+
+	result, apErr := s.handleGetRate(&req)
+	if apErr != nil {
+		return apErr
+	}
+
+	return basslink.NewSuccessResponse(c, "RATE_GET_SUCCESS", result)
+}
+
+func (s *Service) CreateAppointmentHandler(c *fiber.Ctx) error {
+	var req CreateAppointmentRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		return err
+	}
+
+	if err := s.App.ValidateRequest(&req); err != nil {
+		var errorData []map[string]interface{}
+
+		_ = json.Unmarshal([]byte(err.Error()), &errorData)
+
+		return basslink.NewAppError("ERROR_VALIDATION", basslink.ErrBadRequest, basslink.ErrBadRequestValidation, "", errorData)
+	}
+
+	ipAddress := c.IP()
+	isRecaptchaValid, err := s.App.Recaptcha.Verify(req.Token, &ipAddress)
+	if err != nil {
+		return err
+	}
+
+	if !isRecaptchaValid {
+		return errors.New("invalid recaptcha")
+	}
+
+	result, err := s.handleCreateAppointment(&req)
+	if err != nil {
+		return err
+	}
+
+	return basslink.NewSuccessResponse(c, "APPOINTMENT_CREATE_SUCCESS", result)
+}
+
+func (s *Service) SearchTransactionHandler(c *fiber.Ctx) error {
+	var req TransactionSearchRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		return err
+	}
+
+	if err := s.App.ValidateRequest(&req); err != nil {
+		var errorData []map[string]interface{}
+
+		_ = json.Unmarshal([]byte(err.Error()), &errorData)
+
+		return basslink.NewAppError("ERROR_VALIDATION", basslink.ErrBadRequest, basslink.ErrBadRequestValidation, "", errorData)
+	}
+
+	result, err := s.handleSearchTransaction(&req)
+	if err != nil {
+		return err
+	}
+
+	return basslink.NewSuccessResponse(c, "TRANSACTION_SEARCH_SUCCESS", result)
+}
+
+func (s *Service) CreateTransactionHandler(c *fiber.Ctx) error {
+	var req CreateRemittanceRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		return err
+	}
+
+	if err := s.App.ValidateRequest(&req); err != nil {
+		var errorData []map[string]interface{}
+
+		_ = json.Unmarshal([]byte(err.Error()), &errorData)
+
+		return basslink.NewAppError("ERROR_VALIDATION", basslink.ErrBadRequest, basslink.ErrBadRequestValidation, "", errorData)
+	}
+
+	ipAddress := c.IP()
+	isRecaptchaValid, err := s.App.Recaptcha.Verify(req.Token, &ipAddress)
+	if err != nil {
+		return err
+	}
+
+	if !isRecaptchaValid {
+		return errors.New("invalid recaptcha")
+	}
+
+	result, err := s.handleCreateTransaction(&req)
+	if err != nil {
+		return err
+	}
+
+	return basslink.NewSuccessResponse(c, "TRANSACTION_CREATE_SUCCESS", result)
 }

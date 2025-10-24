@@ -48,6 +48,7 @@ func (s *Service) updateRecipient(recipientId string, req *UpdateRecipientReques
 		"zip_code":           req.RecipientZipCode,
 		"contact":            req.RecipientContact,
 		"pep_status":         req.RecipientPepStatus,
+		"account_type":       req.RecipientAccountType,
 		"bank_name":          req.RecipientBankName,
 		"bank_code":          req.RecipientBankCode,
 		"bank_account_no":    req.RecipientBankAccountNo,
@@ -136,7 +137,7 @@ func (s *Service) deleteRecipient(recipientId string) error {
 	return nil
 }
 
-func (s *Service) createRecipient(agent *basslink.Agent, req *CreateRecipientRequest) error {
+func (s *Service) createRecipient(req *CreateRecipientRequest) error {
 	newRecipientId, err := uuid.NewV7()
 	if err != nil {
 		return err
@@ -157,6 +158,7 @@ func (s *Service) createRecipient(agent *basslink.Agent, req *CreateRecipientReq
 		ZipCode:          req.RecipientZipCode,
 		Contact:          req.RecipientContact,
 		PepStatus:        req.RecipientPepStatus,
+		AccountType:      req.RecipientAccountType,
 		BankName:         req.RecipientBankName,
 		BankCode:         req.RecipientBankCode,
 		BankAccountNo:    req.RecipientBankAccountNo,

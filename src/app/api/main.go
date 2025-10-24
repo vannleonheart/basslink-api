@@ -34,9 +34,11 @@ func main() {
 		syscall.SIGHUP,
 	)
 
+	app.CreateRecaptchaClient()
 	app.ConnectToDatabase()
 	app.CreateStorageClient()
 	app.CreateHttpService()
+	app.CreateMailgunClient()
 
 	initRouter()
 
@@ -48,8 +50,10 @@ func main() {
 
 	for {
 		select {
-		case sig := <-app.SignalChannel:
-			go handleQuitSignal(sig)
+		case <-app.SignalChannel:
+			go handleQuitSignal()
+		case msg := <-app.EmailMsgChannel:
+			go app.HandleEmailNotification(msg)
 		}
 	}
 }
@@ -64,13 +68,7 @@ func readFlags() {
 	}
 }
 
-func handlePanicRecovery(source string, data interface{}) {
-	if r := recover(); r != nil {
-
-	}
-}
-
-func handleQuitSignal(sig os.Signal) {
+func handleQuitSignal() {
 	defer func() {
 		os.Exit(0)
 	}()

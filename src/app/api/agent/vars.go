@@ -42,8 +42,8 @@ type UpdateAgentUserRequest struct {
 type CreateSenderRequest struct {
 	SenderType              string  `json:"sender_type" validate:"required,oneof=individual institution"`
 	SenderName              string  `json:"sender_name" validate:"required,min=5,max=100"`
-	SenderGender            string  `json:"sender_gender" validate:"required,oneof=male female"`
-	SenderBirthdate         string  `json:"sender_birthdate" validate:"required"`
+	SenderGender            *string `json:"sender_gender,omitempty" validate:"omitempty,oneof=male female"`
+	SenderBirthdate         *string `json:"sender_birthdate,omitempty" validate:"omitempty"`
 	SenderCitizenship       string  `json:"sender_citizenship" validate:"required"`
 	SenderRegisteredCountry string  `json:"sender_registered_country" validate:"required"`
 	SenderRegisteredRegion  string  `json:"sender_registered_region" validate:"required"`
@@ -72,8 +72,8 @@ type CreateSenderRequest struct {
 type UpdateSenderRequest struct {
 	SenderType              string  `json:"sender_type" validate:"required,oneof=individual institution"`
 	SenderName              string  `json:"sender_name" validate:"required,min=5,max=100"`
-	SenderGender            string  `json:"sender_gender" validate:"required,oneof=male female"`
-	SenderBirthdate         string  `json:"sender_birthdate" validate:"required"`
+	SenderGender            *string `json:"sender_gender,omitempty" validate:"omitempty,oneof=male female"`
+	SenderBirthdate         *string `json:"sender_birthdate,omitempty" validate:"omitempty"`
 	SenderCitizenship       string  `json:"sender_citizenship" validate:"required"`
 	SenderRegisteredCountry string  `json:"sender_registered_country" validate:"required"`
 	SenderRegisteredRegion  string  `json:"sender_registered_region" validate:"required"`
@@ -112,6 +112,7 @@ type CreateRecipientRequest struct {
 	RecipientZipCode          string  `json:"recipient_zip_code" validate:"required"`
 	RecipientContact          string  `json:"recipient_contact" validate:"required"`
 	RecipientPepStatus        *string `json:"recipient_pep_status,omitempty" validate:"omitempty"`
+	RecipientAccountType      string  `json:"recipient_account_type" validate:"required"`
 	RecipientBankName         string  `json:"recipient_bank_name" validate:"required"`
 	RecipientBankCode         string  `json:"recipient_bank_code" validate:"required"`
 	RecipientBankAccountNo    string  `json:"recipient_bank_account_no" validate:"required"`
@@ -136,6 +137,7 @@ type UpdateRecipientRequest struct {
 	RecipientZipCode          string  `json:"recipient_zip_code" validate:"required"`
 	RecipientContact          string  `json:"recipient_contact" validate:"required"`
 	RecipientPepStatus        *string `json:"recipient_pep_status,omitempty" validate:"omitempty"`
+	RecipientAccountType      string  `json:"recipient_account_type" validate:"required"`
 	RecipientBankName         string  `json:"recipient_bank_name" validate:"required"`
 	RecipientBankCode         string  `json:"recipient_bank_code" validate:"required"`
 	RecipientBankAccountNo    string  `json:"recipient_bank_account_no" validate:"required"`
@@ -168,8 +170,8 @@ type CreateRemittanceRequest struct {
 	SenderId                  *string     `json:"sender_id,omitempty" validate:"omitempty"`
 	SenderType                string      `json:"sender_type" validate:"required,oneof=individual institution"`
 	SenderName                string      `json:"sender_name" validate:"required,min=5,max=100"`
-	SenderGender              string      `json:"sender_gender" validate:"required,oneof=male female"`
-	SenderBirthdate           string      `json:"sender_birthdate" validate:"required"`
+	SenderGender              *string     `json:"sender_gender,omitempty" validate:"omitempty,oneof=male female"`
+	SenderBirthdate           *string     `json:"sender_birthdate,omitempty" validate:"omitempty"`
 	SenderCitizenship         string      `json:"sender_citizenship" validate:"required"`
 	SenderRegisteredCountry   string      `json:"sender_registered_country" validate:"required"`
 	SenderRegisteredRegion    string      `json:"sender_registered_region" validate:"required"`
@@ -201,6 +203,7 @@ type CreateRemittanceRequest struct {
 	RecipientZipCode          string      `json:"recipient_zip_code" validate:"required"`
 	RecipientContact          string      `json:"recipient_contact" validate:"required"`
 	RecipientPepStatus        *string     `json:"recipient_pep_status,omitempty" validate:"omitempty"`
+	RecipientAccountType      string      `json:"recipient_account_type" validate:"required"`
 	RecipientBankName         string      `json:"recipient_bank_name" validate:"required"`
 	RecipientBankCode         string      `json:"recipient_bank_code" validate:"required"`
 	RecipientBankAccountNo    string      `json:"recipient_bank_account_no" validate:"required"`

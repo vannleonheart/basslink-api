@@ -150,7 +150,7 @@ func (s *Service) handleToggleAdminUserEnable(c *fiber.Ctx) error {
 }
 
 func (s *Service) handleGetUsers(c *fiber.Ctx) error {
-	result, err := s.getUsers()
+	result, err := s.getSenders()
 	if err != nil {
 		return err
 	}
@@ -160,7 +160,7 @@ func (s *Service) handleGetUsers(c *fiber.Ctx) error {
 
 func (s *Service) handleGetUser(c *fiber.Ctx) error {
 	userId := c.Params("id")
-	result, err := s.getUser(userId)
+	result, err := s.getSenderById(userId)
 	if err != nil {
 		return err
 	}

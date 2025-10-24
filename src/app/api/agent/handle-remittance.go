@@ -55,7 +55,8 @@ func (s *Service) getRemittances(agent *basslink.Agent, req *GetRemittanceFilter
 		}
 
 		if req.Search != nil && *req.Search != "" {
-			db = db.Where("id LIKE ?", "%"+*req.Search+"%")
+			searchText := strings.ToUpper(*req.Search)
+			db = db.Where("id LIKE ?", "%"+searchText+"%")
 		}
 
 		if req.Start != nil {
@@ -133,6 +134,16 @@ func (s *Service) createRemittance(agent *basslink.Agent, req *CreateRemittanceR
 	var recipient *basslink.Recipient
 	var updateSenderData, updateRecipientData *map[string]interface{}
 
+	gender := ""
+	if req.SenderGender != nil && len(*req.SenderGender) > 0 {
+		gender = *req.SenderGender
+	}
+
+	birthdate := ""
+	if req.SenderBirthdate != nil && len(*req.SenderBirthdate) > 0 {
+		birthdate = *req.SenderBirthdate
+	}
+
 	if req.SenderId != nil {
 		var existingSender basslink.Sender
 
@@ -144,8 +155,8 @@ func (s *Service) createRemittance(agent *basslink.Agent, req *CreateRemittanceR
 		updateSenderData = &map[string]interface{}{
 			"sender_type":         req.SenderType,
 			"name":                req.SenderName,
-			"gender":              req.SenderGender,
-			"birthdate":           req.SenderBirthdate,
+			"gender":              gender,
+			"birthdate":           birthdate,
 			"citizenship":         req.SenderCitizenship,
 			"identity_type":       req.SenderIdentityType,
 			"identity_no":         req.SenderIdentityNo,
@@ -176,8 +187,8 @@ func (s *Service) createRemittance(agent *basslink.Agent, req *CreateRemittanceR
 			Id:                newUserId.String(),
 			SenderType:        req.SenderType,
 			Name:              req.SenderName,
-			Gender:            req.SenderGender,
-			Birthdate:         req.SenderBirthdate,
+			Gender:            gender,
+			Birthdate:         birthdate,
 			Citizenship:       req.SenderCitizenship,
 			IdentityType:      req.SenderIdentityType,
 			IdentityNo:        req.SenderIdentityNo,
@@ -219,6 +230,7 @@ func (s *Service) createRemittance(agent *basslink.Agent, req *CreateRemittanceR
 			"zip_code":           req.RecipientZipCode,
 			"contact":            req.RecipientContact,
 			"pep_status":         req.RecipientPepStatus,
+			"account_type":       req.RecipientAccountType,
 			"bank_name":          req.RecipientBankName,
 			"bank_code":          req.RecipientBankCode,
 			"bank_account_no":    req.RecipientBankAccountNo,
@@ -245,6 +257,7 @@ func (s *Service) createRemittance(agent *basslink.Agent, req *CreateRemittanceR
 			ZipCode:          req.RecipientZipCode,
 			Contact:          req.RecipientContact,
 			PepStatus:        req.RecipientPepStatus,
+			AccountType:      req.RecipientAccountType,
 			BankName:         req.RecipientBankName,
 			BankCode:         req.RecipientBankCode,
 			BankAccountNo:    req.RecipientBankAccountNo,
@@ -273,8 +286,8 @@ func (s *Service) createRemittance(agent *basslink.Agent, req *CreateRemittanceR
 		FromAmount:            flFromAmount,
 		FromSenderType:        req.SenderType,
 		FromName:              req.SenderName,
-		FromGender:            req.SenderGender,
-		FromBirthdate:         req.SenderBirthdate,
+		FromGender:            gender,
+		FromBirthdate:         birthdate,
 		FromCitizenship:       req.SenderCitizenship,
 		FromIdentityType:      req.SenderIdentityType,
 		FromIdentityNo:        req.SenderIdentityNo,
@@ -305,6 +318,7 @@ func (s *Service) createRemittance(agent *basslink.Agent, req *CreateRemittanceR
 		ToZipCode:             req.RecipientZipCode,
 		ToContact:             req.RecipientContact,
 		ToPepStatus:           req.RecipientPepStatus,
+		ToAccountType:         req.RecipientAccountType,
 		ToBankName:            req.RecipientBankName,
 		ToBankCode:            req.RecipientBankCode,
 		ToBankAccountNo:       req.RecipientBankAccountNo,

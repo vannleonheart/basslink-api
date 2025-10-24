@@ -257,8 +257,7 @@ func (s *Service) handleCreateRecipient(c *fiber.Ctx) error {
 		return basslink.NewAppError("ERROR_VALIDATION", basslink.ErrBadRequest, basslink.ErrBadRequestValidation, "", errorData)
 	}
 
-	agentUser := c.Locals("agent").(*basslink.AgentUser)
-	err := s.createRecipient(agentUser.Agent, &req)
+	err := s.createRecipient(&req)
 	if err != nil {
 		return err
 	}
@@ -408,4 +407,13 @@ func (s *Service) handleCreateRemittance(c *fiber.Ctx) error {
 	}
 
 	return basslink.NewSuccessResponse(c, "REMITTANCE_CREATE_SUCCESS", nil)
+}
+
+func (s *Service) handleGetAppointments(c *fiber.Ctx) error {
+	result, err := s.getAppointments()
+	if err != nil {
+		return err
+	}
+
+	return basslink.NewSuccessResponse(c, "APPOINTMENT_LIST_SUCCESS", result)
 }

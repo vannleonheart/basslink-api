@@ -37,11 +37,21 @@ func (s *Service) updateUser(agent *basslink.AgentUser, senderId string, req *Up
 
 	now := time.Now().Unix()
 
+	gender := ""
+	if req.SenderGender != nil && len(*req.SenderGender) > 0 {
+		gender = *req.SenderGender
+	}
+
+	birthdate := ""
+	if req.SenderBirthdate != nil && len(*req.SenderBirthdate) > 0 {
+		birthdate = *req.SenderBirthdate
+	}
+
 	updatedUserData := map[string]interface{}{
 		"sender_type":         req.SenderType,
 		"name":                req.SenderName,
-		"gender":              req.SenderGender,
-		"birthdate":           req.SenderBirthdate,
+		"gender":              gender,
+		"birthdate":           birthdate,
 		"citizenship":         req.SenderCitizenship,
 		"identity_type":       req.SenderIdentityType,
 		"identity_no":         req.SenderIdentityNo,
@@ -127,12 +137,22 @@ func (s *Service) createUser(agent *basslink.Agent, req *CreateSenderRequest) er
 
 	now := time.Now().Unix()
 
+	gender := ""
+	if req.SenderGender != nil && len(*req.SenderGender) > 0 {
+		gender = *req.SenderGender
+	}
+
+	birthdate := ""
+	if req.SenderBirthdate != nil && len(*req.SenderBirthdate) > 0 {
+		birthdate = *req.SenderBirthdate
+	}
+
 	newSender := basslink.Sender{
 		Id:                newUserId.String(),
 		SenderType:        req.SenderType,
 		Name:              req.SenderName,
-		Gender:            req.SenderGender,
-		Birthdate:         req.SenderBirthdate,
+		Gender:            gender,
+		Birthdate:         birthdate,
 		Citizenship:       req.SenderCitizenship,
 		IdentityType:      req.SenderIdentityType,
 		IdentityNo:        req.SenderIdentityNo,

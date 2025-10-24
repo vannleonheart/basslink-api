@@ -15,22 +15,29 @@ type App struct {
 	DB         *DBClient
 	HttpServer *HttpServer
 	Storage    *StorageClient
+	Recaptcha  *RecaptchaClient
+	Mailgun    *MailgunClient
 
-	SignalChannel chan os.Signal
+	EmailMsgChannel chan *EmailNotificationMesage
+	SignalChannel   chan os.Signal
 }
 
 type Config struct {
-	JwtKey  string         `json:"jwt_key"`
-	DB      *DBConfig      `json:"db"`
-	Http    *HttpConfig    `json:"http"`
-	Storage *StorageConfig `json:"storage"`
+	JwtKey                  string           `json:"jwt_key"`
+	DB                      *DBConfig        `json:"db"`
+	Http                    *HttpConfig      `json:"http"`
+	Recaptcha               *RecaptchaConfig `json:"recaptcha"`
+	Storage                 *StorageConfig   `json:"storage"`
+	Mailgun                 *MailgunConfig   `json:"mailgun"`
+	PaymentConfirmationLink string           `json:"payment_confirmation_link"`
 }
 
 func New(serviceName string, config *Config) *App {
 	return &App{
-		serviceName:   serviceName,
-		Config:        config,
-		SignalChannel: make(chan os.Signal),
+		serviceName:     serviceName,
+		Config:          config,
+		EmailMsgChannel: make(chan *EmailNotificationMesage, 5),
+		SignalChannel:   make(chan os.Signal),
 	}
 }
 
@@ -81,4 +88,20 @@ func (app *App) CreateStorageClient() {
 	}
 
 	app.Storage = cl
+}
+
+func (app *App) CreateRecaptchaClient() {
+	if app.Config.Recaptcha == nil {
+		panic("recaptcha config is not set")
+	}
+
+	app.Recaptcha = NewRecaptchaClient(app.Config.Recaptcha)
+}
+
+func (app *App) CreateMailgunClient() {
+	if app.Config.Mailgun == nil {
+		panic("mailgun config is not set")
+	}
+
+	app.Mailgun = NewMailgunClient(app.Config.Mailgun)
 }

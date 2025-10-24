@@ -14,6 +14,9 @@ const (
 	TableRemittances              = "remittances"
 	TableRemittanceAttachments    = "remittance_attachments"
 	TableCurrencies               = "currencies"
+	TableAppointments             = "appointments"
+	TableRates                    = "rates"
+	TableTemplates                = "templates"
 
 	AdministratorRoleRoot  = "root"
 	AdministratorRoleSuper = "super"
@@ -24,15 +27,25 @@ const (
 	AgentRoleUser  = "user"
 	AgentRoleGuest = "guest"
 
-	RemittanceStatusDraft     = "draft"
-	RemittanceStatusNew       = "new"
+	RemittanceStatusSubmitted = "submitted"
+	RemittanceStatusReviewed  = "reviewed"
+
+	RemittanceStatusDraft = "draft"
+	RemittanceStatusNew   = "new"
+
 	RemittanceStatusApproved  = "approved"
 	RemittanceStatusRejected  = "rejected"
 	RemittanceStatusPending   = "pending"
 	RemittanceStatusProcessed = "processed"
-	RemittanceStatusCompleted = "paid"
+
+	RemittanceStatusCompleted = "completed"
 	RemittanceStatusCancelled = "cancelled"
 	RemittanceStatusFailed    = "failed"
+)
+
+var (
+	RemittanceSubmissionStatuses = []string{RemittanceStatusSubmitted, RemittanceStatusReviewed}
+	RemittanceTerminalStatuses   = []string{RemittanceStatusCompleted, RemittanceStatusCancelled, RemittanceStatusFailed}
 )
 
 type Administrator struct {
@@ -175,6 +188,7 @@ type Recipient struct {
 	ZipCode          string              `json:"zip_code"`
 	Contact          string              `json:"contact"`
 	PepStatus        *string             `json:"pep_status,omitempty"`
+	AccountType      string              `json:"account_type"`
 	BankName         string              `json:"bank_name"`
 	BankCode         string              `json:"bank_code"`
 	BankAccountNo    string              `json:"bank_account_no"`
@@ -240,6 +254,7 @@ type Remittance struct {
 	ToZipCode             string                  `json:"to_zip_code"`
 	ToContact             string                  `json:"to_contact"`
 	ToPepStatus           *string                 `json:"to_pep_status,omitempty"`
+	ToAccountType         string                  `json:"to_account_type,omitempty"`
 	ToBankName            string                  `json:"to_bank_name"`
 	ToBankCode            string                  `json:"to_bank_code"`
 	ToBankAccountNo       string                  `json:"to_bank_account_no"`
@@ -292,3 +307,42 @@ type Currency struct {
 }
 
 func (t Currency) TableName() string { return TableCurrencies }
+
+type Appointment struct {
+	Id          string  `json:"id"`
+	Name        string  `json:"name"`
+	Company     *string `json:"company,omitempty"`
+	Email       string  `json:"email"`
+	Phone       string  `json:"phone"`
+	ServiceType string  `json:"service_type"`
+	Date        string  `json:"date"`
+	Time        string  `json:"time"`
+	Notes       *string `json:"notes,omitempty"`
+	Status      string  `json:"status"`
+	Created     int64   `json:"created"`
+	Updated     *int64  `json:"updated,omitempty"`
+}
+
+func (t Appointment) TableName() string { return TableAppointments }
+
+type Rate struct {
+	FromCurrency string  `json:"from_currency"`
+	ToCurrency   string  `json:"to_currency"`
+	Rate         float64 `json:"rate"`
+	Source       *string `json:"source,omitempty"`
+	Updated      int64   `json:"updated"`
+}
+
+func (t Rate) TableName() string { return TableRates }
+
+type Template struct {
+	Id           string `json:"id"`
+	TemplateType string `json:"template_type"`
+	Name         string `json:"name"`
+	Version      string `json:"version"`
+	Data         string `json:"data"`
+	Created      int64  `json:"created"`
+	Updated      *int64 `json:"updated"`
+}
+
+func (t Template) TableName() string { return TableTemplates }
