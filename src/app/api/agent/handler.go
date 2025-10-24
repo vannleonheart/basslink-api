@@ -375,6 +375,21 @@ func (s *Service) handleGetRemittances(c *fiber.Ctx) error {
 	return basslink.NewSuccessResponse(c, "REMITTANCE_LIST_SUCCESS", result)
 }
 
+func (s *Service) handleGetSubmissions(c *fiber.Ctx) error {
+	var req GetRemittanceFilter
+
+	if err := c.QueryParser(&req); err != nil {
+		return err
+	}
+
+	result, err := s.getSubmissions(&req)
+	if err != nil {
+		return err
+	}
+
+	return basslink.NewSuccessResponse(c, "REMITTANCE_LIST_SUCCESS", result)
+}
+
 func (s *Service) handleGetRemittance(c *fiber.Ctx) error {
 	agentUser := c.Locals("agent").(*basslink.AgentUser)
 	remittanceId := c.Params("id")
@@ -407,6 +422,17 @@ func (s *Service) handleCreateRemittance(c *fiber.Ctx) error {
 	}
 
 	return basslink.NewSuccessResponse(c, "REMITTANCE_CREATE_SUCCESS", nil)
+}
+
+func (s *Service) handleAcceptSubmission(c *fiber.Ctx) error {
+	remittanceId := c.Params("id")
+	agentUser := c.Locals("agent").(*basslink.AgentUser)
+	err := s.approveSubmission(agentUser.Agent, remittanceId)
+	if err != nil {
+		return err
+	}
+
+	return basslink.NewSuccessResponse(c, "REMITTANCE_UPDATE_SUCCESS", nil)
 }
 
 func (s *Service) handleGetAppointments(c *fiber.Ctx) error {

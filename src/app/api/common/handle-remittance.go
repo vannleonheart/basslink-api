@@ -11,7 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-func (s *Service) handleSearchTransaction(req *TransactionSearchRequest) (*basslink.Remittance, error) {
+func (s *Service) searchTransaction(req *TransactionSearchRequest) (*basslink.Remittance, error) {
 	var remmitance basslink.Remittance
 
 	if err := s.App.DB.Connection.Preload("SourceCurrency").Preload("TargetCurrency").Preload("Attachments").Where("id = ? AND UPPER(from_name) = ? AND UPPER(to_name) = ?", strings.ToUpper(req.TransactionId), strings.ToUpper(req.SenderName), strings.ToUpper(req.RecipientName)).First(&remmitance).Error; err != nil {
@@ -48,48 +48,7 @@ func (s *Service) generateTransactionId(transactionType string) (string, error) 
 	return transactionId, nil
 }
 
-func (s *Service) getBankInfo(currency string) *BankInfo {
-	switch strings.ToLower(currency) {
-	default:
-		return &BankInfo{
-			BankName:     "BNI",
-			BankCode:     "009",
-			SwiftCode:    "BNINIDJA",
-			AccountNo:    "7000-120-555",
-			AccountOwner: "PT Basslink Remitansi Global",
-			Currency:     "IDR",
-		}
-	case "usd":
-		return &BankInfo{
-			BankName:     "BNI",
-			BankCode:     "009",
-			SwiftCode:    "BNINIDJA",
-			AccountNo:    "7000-120-770",
-			AccountOwner: "PT Basslink Remitansi Global",
-			Currency:     "USD",
-		}
-	case "eur":
-		return &BankInfo{
-			BankName:     "BNI",
-			BankCode:     "009",
-			SwiftCode:    "BNINIDJA",
-			AccountNo:    "7000-120-883",
-			AccountOwner: "PT Basslink Remitansi Global",
-			Currency:     "EUR",
-		}
-	case "cny":
-		return &BankInfo{
-			BankName:     "BNI",
-			BankCode:     "009",
-			SwiftCode:    "BNINIDJA",
-			AccountNo:    "7000-120-667",
-			AccountOwner: "PT Basslink Remitansi Global",
-			Currency:     "CNY",
-		}
-	}
-}
-
-func (s *Service) handleCreateTransaction(req *CreateRemittanceRequest) (*basslink.Remittance, error) {
+func (s *Service) createTransaction(req *CreateRemittanceRequest) (*basslink.Remittance, error) {
 	now := time.Now().Unix()
 
 	remittanceId, err := s.generateTransactionId(req.TransferType)
@@ -186,13 +145,7 @@ func (s *Service) handleCreateTransaction(req *CreateRemittanceRequest) (*bassli
 	}
 
 	strToAmount := fmt.Sprintf("%f", flToAmount)
-	calculate, err := s.handleGetRate(&GetRateRequest{
-		FromCurrency: req.FromCurrency,
-		ToCurrency:   req.ToCurrency,
-		FromAmount:   nil,
-		ToAmount:     &strToAmount,
-	})
-
+	calculate, err := s.App.CalculateRate(req.FromCurrency, req.ToCurrency, nil, &strToAmount)
 	if err != nil {
 		return nil, err
 	}
@@ -330,28 +283,6 @@ func (s *Service) handleCreateTransaction(req *CreateRemittanceRequest) (*bassli
 		return nil
 	}); err != nil {
 		return nil, err
-	}
-
-	bankInfo := s.getBankInfo(newRemittance.FromCurrency)
-	s.App.EmailMsgChannel <- &basslink.EmailNotificationMesage{
-		To:       newRemittance.FromContact,
-		Subject:  fmt.Sprintf("%s %s", newRemittance.Id, "Selesaikan pembayaran untuk melanjutkan proses kirim dana"),
-		Template: "remittance-submitted:1",
-		Data: map[string]interface{}{
-			"id":                        newRemittance.Id,
-			"sender_name":               newRemittance.FromName,
-			"recipient_name":            newRemittance.ToName,
-			"to_currency":               newRemittance.ToCurrency,
-			"to_amount":                 newRemittance.ToAmount,
-			"bank_name":                 bankInfo.BankName,
-			"bank_code":                 bankInfo.BankCode,
-			"bank_swift":                bankInfo.SwiftCode,
-			"account_no":                bankInfo.AccountNo,
-			"account_name":              bankInfo.AccountOwner,
-			"currency":                  newRemittance.FromCurrency,
-			"amount":                    newRemittance.FromAmount,
-			"payment_confirmation_link": fmt.Sprintf("%s/%s", s.App.Config.PaymentConfirmationLink, newRemittance.Id),
-		},
 	}
 
 	return &newRemittance, nil

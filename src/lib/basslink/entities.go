@@ -1,5 +1,7 @@
 package basslink
 
+import "encoding/json"
+
 const (
 	TableAdministrators           = "administrators"
 	TableAdministratorCredentials = "administrator_credentials"
@@ -17,6 +19,7 @@ const (
 	TableAppointments             = "appointments"
 	TableRates                    = "rates"
 	TableTemplates                = "templates"
+	TableRemittancePayments       = "remittance_payments"
 
 	AdministratorRoleRoot  = "root"
 	AdministratorRoleSuper = "super"
@@ -27,25 +30,18 @@ const (
 	AgentRoleUser  = "user"
 	AgentRoleGuest = "guest"
 
-	RemittanceStatusSubmitted = "submitted"
-	RemittanceStatusReviewed  = "reviewed"
+	RemittanceStatusSubmitted        = "submitted"         // submitted by user, waiting for approval
+	RemittanceStatusWait             = "wait"              // approved by agent, waiting for payment
+	RemittanceStatusPaymentConfirmed = "payment_confirmed" // payment confirmed by user, waiting for verification
+	RemittanceStatusPaid             = "paid"              // payment approved by agent, waiting for transfer
+	RemittanceStatusProcessed        = "processed"         // transfer being processed
+	RemittanceStatusCompleted        = "completed"         // transfer completed
+	RemittanceStatusCancelled        = "cancelled"         // not approved by agent, payment not received or expired
+	RemittanceStatusFailed           = "refund"            // transfer failed
 
-	RemittanceStatusDraft = "draft"
-	RemittanceStatusNew   = "new"
-
-	RemittanceStatusApproved  = "approved"
-	RemittanceStatusRejected  = "rejected"
-	RemittanceStatusPending   = "pending"
-	RemittanceStatusProcessed = "processed"
-
-	RemittanceStatusCompleted = "completed"
-	RemittanceStatusCancelled = "cancelled"
-	RemittanceStatusFailed    = "failed"
-)
-
-var (
-	RemittanceSubmissionStatuses = []string{RemittanceStatusSubmitted, RemittanceStatusReviewed}
-	RemittanceTerminalStatuses   = []string{RemittanceStatusCompleted, RemittanceStatusCancelled, RemittanceStatusFailed}
+	PaymentStatusWait      = "wait"
+	PaymentStatusCompleted = "completed"
+	PaymentStatusFailed    = "failed"
 )
 
 type Administrator struct {
@@ -303,7 +299,9 @@ type Currency struct {
 	Name     string `json:"name"`
 	Symbol   string `json:"symbol"`
 	Type     string `json:"type"`
-	IsActive bool   `json:"is_active"`
+	AllowIn  bool   `json:"allow_in"`
+	AllowOut bool   `json:"allow_out"`
+	Decimal  int8   `json:"decimal"`
 }
 
 func (t Currency) TableName() string { return TableCurrencies }
@@ -346,3 +344,40 @@ type Template struct {
 }
 
 func (t Template) TableName() string { return TableTemplates }
+
+type RemittancePayment struct {
+	Id                  string      `json:"id"`
+	Currency            string      `json:"currency"`
+	Amount              float64     `json:"amount"`
+	PaymentMethod       string      `json:"payment_method"`
+	PaymentData         string      `json:"payment_data"`
+	PaymentConfirmTime  *string     `json:"payment_confirm_time"`
+	PaymentConfirmProof *string     `json:"payment_confirm_proof"`
+	PaymentReference    *string     `json:"payment_reference"`
+	Status              string      `json:"status"`
+	Created             int64       `json:"created"`
+	Updated             *int64      `json:"updated"`
+	Remittance          *Remittance `json:"remittance,omitempty" gorm:"foreignKey:Id;reference:Id"`
+}
+
+func (t RemittancePayment) TableName() string { return TableRemittancePayments }
+
+type RateInfo struct {
+	FromCurrency string      `json:"from_currency"`
+	ToCurrency   string      `json:"to_currency"`
+	FromAmount   json.Number `json:"from_amount"`
+	ToAmount     json.Number `json:"to_amount"`
+	Rate         json.Number `json:"rate"`
+	FeePercent   json.Number `json:"fee_percent"`
+	FeeFixed     json.Number `json:"fee_fixed"`
+	TotalFee     json.Number `json:"total_fee"`
+}
+
+type BankInfo struct {
+	BankName     string `json:"bank_name"`
+	BankCode     string `json:"bank_code"`
+	SwiftCode    string `json:"swift_code"`
+	AccountNo    string `json:"account_no"`
+	AccountOwner string `json:"account_owner"`
+	Currency     string `json:"currency"`
+}

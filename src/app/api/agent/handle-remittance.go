@@ -90,8 +90,12 @@ func (s *Service) getRemittances(agent *basslink.Agent, req *GetRemittanceFilter
 func (s *Service) getRemittance(agent *basslink.Agent, remittanceId string) (*basslink.Remittance, error) {
 	var remittance basslink.Remittance
 
-	if err := s.App.DB.Connection.Preload("SourceCurrency").Preload("TargetCurrency").Preload("Attachments").Where("id = ? AND agent_id = ?", remittanceId, agent.Id).First(&remittance).Error; err != nil {
+	if err := s.App.DB.Connection.Preload("SourceCurrency").Preload("TargetCurrency").Preload("Attachments").Where("id = ?", remittanceId).First(&remittance).Error; err != nil {
 		return nil, err
+	}
+
+	if remittance.Status != basslink.RemittanceStatusSubmitted && remittance.AgentId != agent.Id {
+		return nil, errors.New("record not found")
 	}
 
 	return &remittance, nil
@@ -336,7 +340,7 @@ func (s *Service) createRemittance(agent *basslink.Agent, req *CreateRemittanceR
 		FundSource:            req.FundSource,
 		Purpose:               req.Purpose,
 		Notes:                 req.Notes,
-		Status:                basslink.RemittanceStatusNew,
+		Status:                basslink.RemittanceStatusWait,
 		IsSettled:             false,
 		CreatedBy:             &createdBy,
 		ApprovedBy:            nil,

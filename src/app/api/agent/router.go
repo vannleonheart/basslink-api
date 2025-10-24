@@ -40,6 +40,10 @@ func (s *Service) InitRouter() {
 	remittanceEndpoint.Get("/:id", s.handleGetRemittance)
 	remittanceEndpoint.Post("/", s.handleCreateRemittance)
 
+	submissionEndpoint := mainEndpoint.Group("/submissions", s.shouldBeUser([]string{}))
+	submissionEndpoint.Get("/", s.handleGetSubmissions)
+	remittanceEndpoint.Post("/:id/accept", s.handleAcceptSubmission)
+
 	appointmentEndpoint := mainEndpoint.Group("/appointments", s.shouldBeUser([]string{}))
 	appointmentEndpoint.Get("/", s.handleGetAppointments)
 }

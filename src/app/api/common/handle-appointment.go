@@ -4,46 +4,15 @@ import (
 	"CRM/src/lib/basslink"
 	"errors"
 	"fmt"
-	"mime/multipart"
+	"strings"
 	"time"
 
 	"github.com/vannleonheart/goutil"
 )
 
-func (s *Service) handleUploadFile(path string, form *multipart.Form) (*[]string, error) {
-	result := make([]string, 0)
-
-	for _, files := range form.File {
-		if len(files) == 0 {
-			return nil, errors.New("no file uploaded")
-		}
-
-		for _, file := range files {
-			fileName := fmt.Sprintf("%s/%s", path, file.Filename)
-			url, err := s.App.Storage.StorePublic(fileName, file)
-			if err != nil {
-				return nil, err
-			}
-			if url != nil {
-				result = append(result, *url)
-			}
-		}
-	}
-
-	return &result, nil
-}
-
-func (s *Service) handleGetCurrencies() (*[]basslink.Currency, error) {
-	var currencies []basslink.Currency
-
-	if err := s.App.DB.Connection.Where("is_active = ?", true).Find(&currencies).Error; err != nil {
-		return nil, err
-	}
-
-	return &currencies, nil
-}
-
 func (s *Service) handleCreateAppointment(req *CreateAppointmentRequest) (*basslink.Appointment, error) {
+	req.Email = strings.ToLower(req.Email)
+
 	var appointments []basslink.Appointment
 
 	if err := s.App.DB.Connection.Where("(email = ? OR phone = ?) AND status = ?", req.Email, req.Phone, "new").Limit(1).Find(&appointments).Error; err != nil {
@@ -51,7 +20,7 @@ func (s *Service) handleCreateAppointment(req *CreateAppointmentRequest) (*bassl
 	}
 
 	if len(appointments) > 0 {
-		return nil, errors.New("you have already booked an appointment with this contact")
+		return nil, errors.New("you have already booked an appointment with this contact recently")
 	}
 
 	dt, err := time.Parse("2006-01-02", req.Date)

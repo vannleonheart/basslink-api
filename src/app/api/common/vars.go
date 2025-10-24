@@ -3,31 +3,20 @@ package common
 import "encoding/json"
 
 type GetRateRequest struct {
-	FromCurrency string  `json:"from_currency" validate:"required"`
-	ToCurrency   string  `json:"to_currency" validate:"required"`
+	FromCurrency string  `json:"from_currency" validate:"required,max=10"`
+	ToCurrency   string  `json:"to_currency" validate:"required,max=10"`
 	FromAmount   *string `json:"from_amount,omitempty" validate:"omitempty"`
 	ToAmount     *string `json:"to_amount,omitempty" validate:"omitempty"`
 }
 
-type GetRequestResponse struct {
-	FromCurrency string      `json:"from_currency"`
-	ToCurrency   string      `json:"to_currency"`
-	FromAmount   json.Number `json:"from_amount"`
-	ToAmount     json.Number `json:"to_amount"`
-	Rate         json.Number `json:"rate"`
-	FeePercent   json.Number `json:"fee_percent"`
-	FeeFixed     json.Number `json:"fee_fixed"`
-	TotalFee     json.Number `json:"total_fee"`
-}
-
 type CreateAppointmentRequest struct {
-	Name    string  `json:"name" validate:"required,min=5,max=100"`
-	Company *string `json:"company,omitempty" validate:"omitempty"`
+	Name    string  `json:"name" validate:"required,min=3,max=100"`
+	Company *string `json:"company,omitempty" validate:"omitempty,min=3,max=100"`
 	Email   string  `json:"email" validate:"required,email,max=100"`
-	Phone   string  `json:"phone" validate:"required,min=5,max=15"`
-	Service string  `json:"service" validate:"required"`
-	Date    string  `json:"date" validate:"required"`
-	Time    string  `json:"time" validate:"required"`
+	Phone   string  `json:"phone" validate:"required,numeric,min=5,max=20"`
+	Service string  `json:"service" validate:"required,max=25"`
+	Date    string  `json:"date" validate:"required,datetime=2006-01-02"`
+	Time    string  `json:"time" validate:"required,datetime=15:04"`
 	Notes   *string `json:"notes,omitempty" validate:"omitempty"`
 	Token   string  `json:"token" validate:"required"`
 }
@@ -89,11 +78,9 @@ type CreateRemittanceRequest struct {
 	Token                     string      `json:"token" validate:"required"`
 }
 
-type BankInfo struct {
-	BankName     string
-	BankCode     string
-	SwiftCode    string
-	AccountNo    string
-	AccountOwner string
-	Currency     string
+type PaymentConfirmRequest struct {
+	Date      string `json:"date" validate:"required"`
+	Proof     string `json:"proof" validate:"required"`
+	Reference string `json:"reference" validate:"required"`
+	Token     string `json:"token" validate:"required"`
 }
