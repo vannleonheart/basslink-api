@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 	"time"
 
@@ -407,6 +408,135 @@ func (s *Service) createRemittance(agent *basslink.Agent, req *CreateRemittanceR
 		return nil
 	}); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (s *Service) cancelRemittance(agent *basslink.Agent, id string, req *RemittanceCancelRequest) error {
+	var remittance basslink.Remittance
+
+	if err := s.App.DB.Connection.Preload("SourceCurrency").Preload("TargetCurrency").Preload("Attachments").Where("id = ?", id).First(&remittance).Error; err != nil {
+		return err
+	}
+
+	eligibleRemittanceStatuses := []string{
+		basslink.RemittanceStatusSubmitted,
+		basslink.RemittanceStatusWait,
+		basslink.RemittanceStatusPaymentConfirmed,
+	}
+
+	if !slices.Contains(eligibleRemittanceStatuses, remittance.Status) {
+		return errors.New("invalid status")
+	}
+
+	now := time.Now().Unix()
+
+	if err := s.App.DB.Connection.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(basslink.Remittance{}).Where("id = ? AND status IN ?", remittance.Id, eligibleRemittanceStatuses).Updates(map[string]interface{}{
+			"agent_id":        agent.Id,
+			"status":          basslink.RemittanceStatusCancelled,
+			"processed_at":    now,
+			"processed_by":    agent.Id,
+			"processed_notes": req.Reason,
+			"updated":         now,
+		}).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Model(basslink.RemittancePayment{}).Where("id = ? AND status IN ?", remittance.Id, []string{
+			basslink.PaymentStatusWait,
+			basslink.PaymentStatusConfirmed,
+		}).Updates(map[string]interface{}{
+			"status":  basslink.PaymentStatusFailed,
+			"notes":   req.Reason,
+			"updated": now,
+		}).Error; err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	if remittance.NotificationEmail != nil && len(*remittance.NotificationEmail) > 0 {
+		s.App.EmailMsgChannel <- &basslink.EmailNotificationMesage{
+			To:       *remittance.NotificationEmail,
+			Subject:  fmt.Sprintf("%s - %s", remittance.Id, "Permintaan pengiriman dana telah dibatalkan"),
+			Template: "remittance-cancel:1",
+			Data: map[string]interface{}{
+				"id":             remittance.Id,
+				"sender_name":    remittance.FromName,
+				"recipient_name": remittance.ToName,
+				"to_currency":    remittance.TargetCurrency.Symbol,
+				"to_amount":      s.App.FormatCurrency(fmt.Sprintf("%f", remittance.ToAmount)),
+			},
+		}
+	}
+
+	return nil
+}
+
+func (s *Service) completeRemittance(agent *basslink.Agent, id string, req *RemittanceCompleteRequest) error {
+	var remittance basslink.Remittance
+
+	if err := s.App.DB.Connection.Preload("SourceCurrency").Preload("TargetCurrency").Preload("Attachments").Where("id = ?", id).First(&remittance).Error; err != nil {
+		return err
+	}
+
+	eligibleRemittanceStatuses := []string{
+		basslink.RemittanceStatusWait,
+		basslink.RemittanceStatusPaymentConfirmed,
+	}
+
+	if !slices.Contains(eligibleRemittanceStatuses, remittance.Status) {
+		return errors.New("invalid status")
+	}
+
+	now := time.Now().Unix()
+
+	if err := s.App.DB.Connection.Transaction(func(tx *gorm.DB) error {
+		if err := tx.Model(basslink.Remittance{}).Where("id = ? AND status IN ?", remittance.Id, eligibleRemittanceStatuses).Updates(map[string]interface{}{
+			"agent_id":            agent.Id,
+			"status":              basslink.RemittanceStatusCompleted,
+			"processed_at":        now,
+			"processed_by":        agent.Id,
+			"processed_reference": req.Reference,
+			"processed_notes":     req.Notes,
+			"updated":             now,
+		}).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Model(basslink.RemittancePayment{}).Where("id = ? AND status IN ?", remittance.Id, []string{
+			basslink.PaymentStatusWait,
+			basslink.PaymentStatusConfirmed,
+		}).Updates(map[string]interface{}{
+			"status":  basslink.PaymentStatusCompleted,
+			"updated": now,
+		}).Error; err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
+	if remittance.NotificationEmail != nil && len(*remittance.NotificationEmail) > 0 {
+		s.App.EmailMsgChannel <- &basslink.EmailNotificationMesage{
+			To:       *remittance.NotificationEmail,
+			Subject:  fmt.Sprintf("%s - %s", remittance.Id, "Pengiriman dana telah berhasil diproses"),
+			Template: "remittance-done:1",
+			Data: map[string]interface{}{
+				"id":             remittance.Id,
+				"sender_name":    remittance.FromName,
+				"recipient_name": remittance.ToName,
+				"to_currency":    remittance.TargetCurrency.Symbol,
+				"to_amount":      s.App.FormatCurrency(fmt.Sprintf("%f", remittance.ToAmount)),
+			},
+		}
 	}
 
 	return nil

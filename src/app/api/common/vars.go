@@ -75,12 +75,13 @@ type CreateRemittanceRequest struct {
 	Purpose                   *string     `json:"purpose,omitempty" validate:"omitempty"`
 	Notes                     *string     `json:"notes,omitempty" validate:"omitempty"`
 	Files                     *[]string   `json:"files,omitempty" validate:"omitempty"`
+	NotificationEmail         string      `json:"notification_email" validate:"required,email,max=100"`
 	Token                     string      `json:"token" validate:"required"`
 }
 
 type PaymentConfirmRequest struct {
-	Date      string `json:"date" validate:"required"`
-	Proof     string `json:"proof" validate:"required"`
-	Reference string `json:"reference" validate:"required"`
-	Token     string `json:"token" validate:"required"`
+	Date      string  `json:"date" validate:"required"`
+	Proof     string  `json:"proof" validate:"required"`
+	Reference *string `json:"reference" validate:"required"`
+	Token     string  `json:"token" validate:"required"`
 }

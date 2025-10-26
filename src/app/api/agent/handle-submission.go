@@ -96,25 +96,27 @@ func (s *Service) approveSubmission(agent *basslink.Agent, id string) error {
 		return err
 	}
 
-	s.App.EmailMsgChannel <- &basslink.EmailNotificationMesage{
-		To:       remittance.FromContact,
-		Subject:  fmt.Sprintf("%s %s", remittance.Id, "Selesaikan pembayaran untuk melanjutkan proses kirim dana"),
-		Template: "remittance-submitted:1",
-		Data: map[string]interface{}{
-			"id":                        remittance.Id,
-			"sender_name":               remittance.FromName,
-			"recipient_name":            remittance.ToName,
-			"to_currency":               remittance.TargetCurrency.Symbol,
-			"to_amount":                 fmt.Sprintf("%f", remittance.ToAmount),
-			"bank_name":                 bankInfo.BankName,
-			"bank_code":                 bankInfo.BankCode,
-			"bank_swift":                bankInfo.SwiftCode,
-			"account_no":                bankInfo.AccountNo,
-			"account_name":              bankInfo.AccountOwner,
-			"currency":                  remittance.SourceCurrency.Symbol,
-			"amount":                    fmt.Sprintf("%f", remittance.FromAmount),
-			"payment_confirmation_link": fmt.Sprintf("%s/%s", s.App.Config.PaymentConfirmationLink, remittance.Id),
-		},
+	if remittance.NotificationEmail != nil && len(*remittance.NotificationEmail) > 0 {
+		s.App.EmailMsgChannel <- &basslink.EmailNotificationMesage{
+			To:       *remittance.NotificationEmail,
+			Subject:  fmt.Sprintf("%s - %s", remittance.Id, "Selesaikan pembayaran untuk melanjutkan proses kirim dana"),
+			Template: "remittance-submitted:1",
+			Data: map[string]interface{}{
+				"id":                        remittance.Id,
+				"sender_name":               remittance.FromName,
+				"recipient_name":            remittance.ToName,
+				"to_currency":               remittance.TargetCurrency.Symbol,
+				"to_amount":                 s.App.FormatCurrency(fmt.Sprintf("%f", remittance.ToAmount)),
+				"bank_name":                 bankInfo.BankName,
+				"bank_code":                 bankInfo.BankCode,
+				"bank_swift":                bankInfo.SwiftCode,
+				"account_no":                bankInfo.AccountNo,
+				"account_name":              bankInfo.AccountOwner,
+				"currency":                  remittance.SourceCurrency.Symbol,
+				"amount":                    s.App.FormatCurrency(fmt.Sprintf("%f", remittance.FromAmount)),
+				"payment_confirmation_link": fmt.Sprintf("%s/%s", s.App.Config.PaymentConfirmationLink, remittance.Id),
+			},
+		}
 	}
 
 	return nil

@@ -13,6 +13,8 @@ import (
 	"github.com/go-playground/validator/v10"
 	entranslations "github.com/go-playground/validator/v10/translations/en"
 	"github.com/golang-jwt/jwt/v5"
+	"golang.org/x/text/language"
+	"golang.org/x/text/message"
 )
 
 func (app *App) CreateJwtToken(claims jwt.Claims) (string, error) {
@@ -28,6 +30,17 @@ func (app *App) FormatPhoneCode(phoneCode string) string {
 	}
 
 	return phoneCode
+}
+
+func (app *App) FormatCurrency(amount string) string {
+	prnt := message.NewPrinter(language.English)
+
+	flAmount, err := strconv.ParseFloat(amount, 64)
+	if err != nil {
+		return amount
+	}
+
+	return prnt.Sprintf("%d", int64(flAmount))
 }
 
 func (app *App) HashPassword(password string) string {
@@ -74,36 +87,9 @@ func (app *App) GetBankInfo(currency string) *BankInfo {
 			BankName:     "BNI",
 			BankCode:     "009",
 			SwiftCode:    "BNINIDJA",
-			AccountNo:    "7000-120-555",
+			AccountNo:    "7000-120-996",
 			AccountOwner: "PT Basslink Remitansi Global",
 			Currency:     "IDR",
-		}
-	case "usd":
-		return &BankInfo{
-			BankName:     "BNI",
-			BankCode:     "009",
-			SwiftCode:    "BNINIDJA",
-			AccountNo:    "7000-120-770",
-			AccountOwner: "PT Basslink Remitansi Global",
-			Currency:     "USD",
-		}
-	case "eur":
-		return &BankInfo{
-			BankName:     "BNI",
-			BankCode:     "009",
-			SwiftCode:    "BNINIDJA",
-			AccountNo:    "7000-120-883",
-			AccountOwner: "PT Basslink Remitansi Global",
-			Currency:     "EUR",
-		}
-	case "cny":
-		return &BankInfo{
-			BankName:     "BNI",
-			BankCode:     "009",
-			SwiftCode:    "BNINIDJA",
-			AccountNo:    "7000-120-667",
-			AccountOwner: "PT Basslink Remitansi Global",
-			Currency:     "CNY",
 		}
 	}
 }

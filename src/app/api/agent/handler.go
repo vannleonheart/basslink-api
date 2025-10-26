@@ -424,10 +424,59 @@ func (s *Service) handleCreateRemittance(c *fiber.Ctx) error {
 	return basslink.NewSuccessResponse(c, "REMITTANCE_CREATE_SUCCESS", nil)
 }
 
+func (s *Service) handleCompleteRemittance(c *fiber.Ctx) error {
+	var req RemittanceCompleteRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		return err
+	}
+
+	if err := s.App.ValidateRequest(&req); err != nil {
+		var errorData []map[string]interface{}
+
+		_ = json.Unmarshal([]byte(err.Error()), &errorData)
+
+		return basslink.NewAppError("ERROR_VALIDATION", basslink.ErrBadRequest, basslink.ErrBadRequestValidation, "", errorData)
+	}
+	agentUser := c.Locals("agent").(*basslink.AgentUser)
+	id := c.Params("id")
+	err := s.completeRemittance(agentUser.Agent, id, &req)
+	if err != nil {
+		return err
+	}
+
+	return basslink.NewSuccessResponse(c, "REMITTANCE_UPDATE_SUCCESS", nil)
+}
+
 func (s *Service) handleAcceptSubmission(c *fiber.Ctx) error {
 	remittanceId := c.Params("id")
 	agentUser := c.Locals("agent").(*basslink.AgentUser)
 	err := s.approveSubmission(agentUser.Agent, remittanceId)
+	if err != nil {
+		return err
+	}
+
+	return basslink.NewSuccessResponse(c, "REMITTANCE_UPDATE_SUCCESS", nil)
+}
+
+func (s *Service) handleRejectSubmission(c *fiber.Ctx) error {
+	var req RemittanceCancelRequest
+
+	if err := c.BodyParser(&req); err != nil {
+		return err
+	}
+
+	if err := s.App.ValidateRequest(&req); err != nil {
+		var errorData []map[string]interface{}
+
+		_ = json.Unmarshal([]byte(err.Error()), &errorData)
+
+		return basslink.NewAppError("ERROR_VALIDATION", basslink.ErrBadRequest, basslink.ErrBadRequestValidation, "", errorData)
+	}
+
+	remittanceId := c.Params("id")
+	agentUser := c.Locals("agent").(*basslink.AgentUser)
+	err := s.cancelRemittance(agentUser.Agent, remittanceId, &req)
 	if err != nil {
 		return err
 	}

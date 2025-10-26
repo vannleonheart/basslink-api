@@ -34,12 +34,19 @@ func (s *Service) handlePaymentConfirm(id string, req *PaymentConfirmRequest) er
 	}
 
 	if err := s.App.DB.Connection.Transaction(func(tx *gorm.DB) error {
-		if err := tx.Model(basslink.RemittancePayment{}).Where("id = ? AND status = ?", id, basslink.RemittanceStatusWait).Updates(map[string]interface{}{
-			"status":                basslink.RemittanceStatusPaymentConfirmed,
+		if err := tx.Model(basslink.RemittancePayment{}).Where("id = ? AND status = ?", id, basslink.PaymentStatusWait).Updates(map[string]interface{}{
+			"status":                basslink.PaymentStatusConfirmed,
 			"payment_confirm_time":  req.Date,
 			"payment_confirm_proof": req.Proof,
 			"payment_reference":     req.Reference,
 			"updated":               time.Now().Unix(),
+		}).Error; err != nil {
+			return err
+		}
+
+		if err := tx.Model(basslink.Remittance{}).Where("id = ? AND status = ?", id, basslink.RemittanceStatusWait).Updates(map[string]interface{}{
+			"status":  basslink.RemittanceStatusPaymentConfirmed,
+			"updated": time.Now().Unix(),
 		}).Error; err != nil {
 			return err
 		}

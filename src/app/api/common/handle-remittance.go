@@ -228,6 +228,7 @@ func (s *Service) createTransaction(req *CreateRemittanceRequest) (*basslink.Rem
 		FundSource:            req.FundSource,
 		Purpose:               req.Purpose,
 		Notes:                 req.Notes,
+		NotificationEmail:     &req.NotificationEmail,
 		Status:                basslink.RemittanceStatusSubmitted,
 		IsSettled:             false,
 		CreatedBy:             nil,
@@ -235,11 +236,13 @@ func (s *Service) createTransaction(req *CreateRemittanceRequest) (*basslink.Rem
 		ReleasedBy:            nil,
 		ApprovedAt:            nil,
 		ReleasedAt:            nil,
+		ProcessedAt:           nil,
+		ProcessedNotes:        nil,
+		ProcessedReference:    nil,
+		ProcessedReceipt:      nil,
+		ProcessedBy:           nil,
 		Created:               now,
 		Updated:               nil,
-		SourceCurrency:        nil,
-		TargetCurrency:        nil,
-		Attachments:           nil,
 	}
 
 	var files []basslink.RemittanceAttachment

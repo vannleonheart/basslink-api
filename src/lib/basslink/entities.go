@@ -40,6 +40,7 @@ const (
 	RemittanceStatusFailed           = "refund"            // transfer failed
 
 	PaymentStatusWait      = "wait"
+	PaymentStatusConfirmed = "confirmed"
 	PaymentStatusCompleted = "completed"
 	PaymentStatusFailed    = "failed"
 )
@@ -268,6 +269,7 @@ type Remittance struct {
 	FundSource            *string                 `json:"fund_source,omitempty"`
 	Purpose               *string                 `json:"purpose,omitempty"`
 	Notes                 *string                 `json:"notes,omitempty"`
+	NotificationEmail     *string                 `json:"notification_email,omitempty"`
 	Status                string                  `json:"status"`
 	IsSettled             bool                    `json:"is_settled"`
 	CreatedBy             *string                 `json:"created_by"`
@@ -275,6 +277,11 @@ type Remittance struct {
 	ReleasedBy            *string                 `json:"released_by"`
 	ApprovedAt            *int64                  `json:"approved_at,omitempty"`
 	ReleasedAt            *int64                  `json:"released_at,omitempty"`
+	ProcessedAt           *int64                  `json:"processed_at,omitempty"`
+	ProcessedNotes        *string                 `json:"processed_notes,omitempty"`
+	ProcessedReference    *string                 `json:"processed_reference,omitempty"`
+	ProcessedReceipt      *string                 `json:"processed_receipt,omitempty"`
+	ProcessedBy           *string                 `json:"processed_by,omitempty"`
 	Created               int64                   `json:"created"`
 	Updated               *int64                  `json:"updated,omitempty"`
 	SourceCurrency        *Currency               `json:"source_currency,omitempty" gorm:"foreignKey:FromCurrency;reference:Id"`
@@ -354,6 +361,7 @@ type RemittancePayment struct {
 	PaymentConfirmTime  *string     `json:"payment_confirm_time"`
 	PaymentConfirmProof *string     `json:"payment_confirm_proof"`
 	PaymentReference    *string     `json:"payment_reference"`
+	Notes               *string     `json:"notes,omitempty"`
 	Status              string      `json:"status"`
 	Created             int64       `json:"created"`
 	Updated             *int64      `json:"updated"`

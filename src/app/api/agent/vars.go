@@ -230,3 +230,14 @@ type GetRemittanceFilter struct {
 	FromCurrency *string `json:"from_currency,omitempty" query:"from_currency"`
 	ToCurrency   *string `json:"to_currency,omitempty" query:"to_currency"`
 }
+
+type RemittanceCancelRequest struct {
+	Reason string `json:"reason" validate:"required"`
+}
+
+type RemittanceCompleteRequest struct {
+	Date      string  `json:"date" validate:"required"`
+	Reference string  `json:"reference" validate:"required,max=100"`
+	Notes     *string `json:"notes,omitempty" validate:"omitempty"`
+	Receipt   string  `json:"receipt" validate:"required"`
+}
